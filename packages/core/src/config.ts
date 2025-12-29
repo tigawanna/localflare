@@ -46,6 +46,9 @@ export function getBindingSummary(bindings: DiscoveredBindings): string[] {
   if (bindings.queues.producers.length > 0) {
     summary.push(`Queue Producers: ${bindings.queues.producers.map(q => q.binding).join(', ')}`)
   }
+  if (bindings.queues.consumers.length > 0) {
+    summary.push(`Queue Consumers: ${bindings.queues.consumers.map(q => q.queue).join(', ')}`)
+  }
   if (Object.keys(bindings.vars).length > 0) {
     summary.push(`Environment Variables: ${Object.keys(bindings.vars).join(', ')}`)
   }

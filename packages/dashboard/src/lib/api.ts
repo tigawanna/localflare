@@ -108,6 +108,34 @@ export const queuesApi = {
     }),
 }
 
+// Durable Objects
+export const doApi = {
+  list: () => fetchApi<{ durableObjects: DurableObject[] }>('/do'),
+  getInstances: () =>
+    fetchApi<{ instances: DOInstance[] }>('/do/instances'),
+  getId: (binding: string, options: { name?: string; id?: string }) =>
+    fetchApi<{ id: string }>(`/do/${binding}/id`, {
+      method: 'POST',
+      body: JSON.stringify(options),
+    }),
+  fetch: async (binding: string, id: string, path: string, options?: RequestInit) => {
+    const response = await fetch(`/api/do/${binding}/${id}/fetch${path}`, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        ...options?.headers,
+      },
+    })
+    return response
+  },
+}
+
+export interface DOInstance extends Record<string, unknown> {
+  binding: string
+  class_name: string
+  id: string
+}
+
 // Types
 export interface BindingsResponse {
   name: string
@@ -115,7 +143,7 @@ export interface BindingsResponse {
     d1: { type: string; binding: string; database_name: string }[]
     kv: { type: string; binding: string }[]
     r2: { type: string; binding: string; bucket_name: string }[]
-    durableObjects: { type: string; binding: string; class_name: string }[]
+    durableObjects: { type: string; name: string; binding: string; class_name: string; script_name?: string }[]
     queues: {
       producers: { type: string; binding: string; queue: string }[]
       consumers: { type: string; queue: string }[]
@@ -181,4 +209,14 @@ export interface QueueProducer {
 
 export interface QueueConsumer {
   queue: string
+  max_batch_size: number
+  max_batch_timeout: number
+  max_retries: number
+  dead_letter_queue?: string
+}
+
+export interface DurableObject {
+  name: string
+  class_name: string
+  script_name?: string
 }

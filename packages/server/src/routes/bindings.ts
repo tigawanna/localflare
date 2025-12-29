@@ -32,8 +32,10 @@ export function createBindingsRoutes(localflare: LocalFlare) {
         })),
         durableObjects: bindings.durableObjects.map((d) => ({
           type: 'DurableObject',
+          name: d.name,
           binding: d.name,
           class_name: d.class_name,
+          script_name: d.script_name,
         })),
         queues: {
           producers: bindings.queues.producers.map((q) => ({

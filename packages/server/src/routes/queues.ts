@@ -4,12 +4,22 @@ import type { LocalFlare } from 'localflare-core'
 export function createQueueRoutes(localflare: LocalFlare) {
   const app = new Hono()
 
-  // List all queue producers
+  // List all queue producers and consumers with full configuration
   app.get('/', async (c) => {
     const bindings = localflare.getDiscoveredBindings()
+
+    // Map consumers with their configuration (with defaults)
+    const consumers = (bindings?.queues.consumers ?? []).map(consumer => ({
+      queue: consumer.queue,
+      max_batch_size: consumer.max_batch_size ?? 10,
+      max_batch_timeout: consumer.max_batch_timeout ?? 5,
+      max_retries: consumer.max_retries ?? 3,
+      dead_letter_queue: consumer.dead_letter_queue,
+    }))
+
     return c.json({
       producers: bindings?.queues.producers ?? [],
-      consumers: bindings?.queues.consumers ?? [],
+      consumers,
     })
   })
 

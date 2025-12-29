@@ -77,6 +77,20 @@ export class LocalFlare {
       this.bindings.queues.producers.map(q => [q.binding, q.queue])
     )
 
+    // Queue consumers configuration for Miniflare
+    // Maps queue name to consumer options
+    const queueConsumers = Object.fromEntries(
+      this.bindings.queues.consumers.map(c => [
+        c.queue,
+        {
+          maxBatchSize: c.max_batch_size ?? 10,
+          maxBatchTimeout: c.max_batch_timeout ?? 5,
+          maxRetries: c.max_retries ?? 3,
+          deadLetterQueue: c.dead_letter_queue,
+        },
+      ])
+    )
+
     const durableObjects = Object.fromEntries(
       this.bindings.durableObjects.map(d => [d.name, d.class_name])
     )
@@ -113,6 +127,9 @@ export class LocalFlare {
     }
     if (Object.keys(queueProducers).length > 0) {
       miniflareOptions.queueProducers = queueProducers
+    }
+    if (Object.keys(queueConsumers).length > 0) {
+      miniflareOptions.queueConsumers = queueConsumers
     }
     if (Object.keys(durableObjects).length > 0) {
       miniflareOptions.durableObjects = durableObjects
