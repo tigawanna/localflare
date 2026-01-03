@@ -115,6 +115,38 @@ Options:
 - **A Cloudflare Workers project** with `wrangler.toml`
 - **wrangler dev** must work for your project (Localflare runs alongside wrangler)
 
+## Browser Troubleshooting
+
+The Localflare dashboard runs at `studio.localflare.dev` and connects to your local worker. Some browsers have security features that may block this connection.
+
+### Chrome / Chromium
+
+Recent Chrome updates may block [local network access](https://developer.chrome.com/blog/local-network-access) by default. This prevents the dashboard from connecting to your localhost worker.
+
+**To fix:**
+1. Click the lock/info icon in the URL bar (Site information)
+2. Find "Local network access" or "Insecure content"
+3. Set it to "Allow"
+4. Refresh the page
+
+### Safari / Brave
+
+Safari and Brave block access to localhost from external sites by default. You need to install [mkcert](https://github.com/FiloSottile/mkcert) and generate a local CA:
+
+```bash
+# Install mkcert (macOS)
+brew install mkcert
+
+# Install the local CA
+mkcert -install
+
+# Restart your browser
+```
+
+**Brave alternative:** You can also disable Brave Shields for `studio.localflare.dev`:
+1. Click the Brave Shields icon in the URL bar
+2. Toggle shields off for this site
+
 ### Supported Project Types
 
 | Project Type | Mode | Command |

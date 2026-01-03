@@ -108,6 +108,7 @@ export const WIKI_SECTIONS: WikiSection[] = [
     title: 'Troubleshooting',
     icon: AlertCircleIcon,
     children: [
+      { id: 'browser-issues', title: 'Browser Issues' },
       { id: 'common-issues', title: 'Common Issues' },
       { id: 'faq', title: 'FAQ' },
     ],

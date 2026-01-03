@@ -169,6 +169,7 @@ export function WikiContent({ activeSection }: { activeSection: string }) {
 
     // Troubleshooting
     'troubleshooting': <TroubleshootingSection />,
+    'browser-issues': <BrowserIssuesSection />,
     'common-issues': <CommonIssuesSection />,
     'faq': <FAQSection />,
   };
@@ -1283,6 +1284,88 @@ function TroubleshootingSection() {
       <H1>Troubleshooting</H1>
       <P>
         Solutions to common issues when using Localflare.
+      </P>
+    </Section>
+  );
+}
+
+function BrowserIssuesSection() {
+  return (
+    <Section id="browser-issues">
+      <H1>Browser Issues</H1>
+      <P>
+        The Localflare dashboard runs at <Code>studio.localflare.dev</Code> and connects to your
+        local worker. Some browsers have security features that may block this connection.
+      </P>
+
+      <H2>Chrome / Chromium</H2>
+      <P>
+        Recent Chrome updates may block local network access by default. This prevents the dashboard
+        from connecting to your localhost worker.
+      </P>
+      <Callout type="warning">
+        <strong>Chrome blocks local network connections</strong> — You may see a connection error
+        when opening the dashboard.
+      </Callout>
+      <H3>How to Fix</H3>
+      <Steps items={[
+        { title: 'Click the lock/info icon', content: 'In the URL bar, click the site information icon (lock or info)' },
+        { title: 'Find Local Network Access', content: 'Look for "Local network access" or "Insecure content" setting' },
+        { title: 'Set to Allow', content: 'Change the setting to "Allow"' },
+        { title: 'Refresh the page', content: 'The dashboard should now connect to your worker' },
+      ]} />
+      <P>
+        For more information, see the{' '}
+        <a href="https://developer.chrome.com/blog/local-network-access" target="_blank" rel="noopener noreferrer" className="text-orange-600 hover:underline">
+          Chrome Local Network Access documentation
+        </a>.
+      </P>
+
+      <H2>Safari</H2>
+      <P>
+        Safari blocks access to localhost from external sites by default. You need to install
+        mkcert and generate a local CA certificate.
+      </P>
+      <H3>Installing mkcert</H3>
+      <CodeBlock title="Terminal">{`# Install mkcert (macOS)
+brew install mkcert
+
+# Install the local CA
+mkcert -install
+
+# Restart Safari`}</CodeBlock>
+      <P>
+        After installing, restart Safari completely. The dashboard should now connect to your local worker.
+      </P>
+      <Callout type="info">
+        mkcert creates locally-trusted development certificates. Learn more at{' '}
+        <a href="https://github.com/FiloSottile/mkcert" target="_blank" rel="noopener noreferrer" className="text-orange-600 hover:underline">
+          github.com/FiloSottile/mkcert
+        </a>
+      </Callout>
+
+      <H2>Brave</H2>
+      <P>
+        Brave also blocks access to localhost from external sites. You have two options:
+      </P>
+      <H3>Option 1: Install mkcert (Recommended)</H3>
+      <P>Follow the same mkcert installation steps as Safari above.</P>
+      <H3>Option 2: Disable Brave Shields</H3>
+      <Steps items={[
+        { title: 'Open studio.localflare.dev', content: 'Navigate to the dashboard' },
+        { title: 'Click Brave Shields icon', content: 'In the URL bar, click the lion icon' },
+        { title: 'Toggle shields off', content: 'Disable shields for this site only' },
+        { title: 'Refresh the page', content: 'The dashboard should now connect' },
+      ]} />
+      <Callout type="tip">
+        Installing mkcert is the recommended solution as it works across all browsers and doesn't
+        require disabling security features.
+      </Callout>
+
+      <H2>Firefox</H2>
+      <P>
+        Firefox generally works without additional configuration. If you encounter issues,
+        try the mkcert solution above.
       </P>
     </Section>
   );
