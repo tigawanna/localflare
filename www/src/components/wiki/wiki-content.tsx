@@ -1,4 +1,43 @@
 import { cn } from '@/lib/utils';
+import { HugeiconsIcon } from '@hugeicons/react';
+import { Link05Icon } from '@hugeicons/core-free-icons';
+
+// Helper to generate ID from text content
+function generateId(children: React.ReactNode): string {
+  const text = typeof children === 'string'
+    ? children
+    : Array.isArray(children)
+      ? children.map(c => typeof c === 'string' ? c : '').join('')
+      : '';
+  return text
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .trim();
+}
+
+// Anchor link component for headings
+function AnchorLink({ id }: { id: string }) {
+  const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    const url = `${window.location.pathname}${window.location.search}#${id}`;
+    window.history.pushState(null, '', url);
+    navigator.clipboard.writeText(window.location.origin + url);
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  return (
+    <a
+      href={`#${id}`}
+      onClick={handleClick}
+      className="ml-2 opacity-0 group-hover:opacity-100 transition-opacity text-zinc-400 hover:text-orange-500"
+      aria-label="Copy link to section"
+    >
+      <HugeiconsIcon icon={Link05Icon} size={14} strokeWidth={2} />
+    </a>
+  );
+}
 
 // Minimal reusable components
 function Section({ id, children }: { id: string; children: React.ReactNode }) {
@@ -9,16 +48,34 @@ function Section({ id, children }: { id: string; children: React.ReactNode }) {
   );
 }
 
-function H1({ children }: { children: React.ReactNode }) {
-  return <h1 className="mb-6 text-2xl font-semibold tracking-tight text-zinc-900">{children}</h1>;
+function H1({ children, id }: { children: React.ReactNode; id?: string }) {
+  const headingId = id || generateId(children);
+  return (
+    <h1 id={headingId} className="group mb-6 text-2xl font-semibold tracking-tight text-zinc-900 scroll-mt-16 flex items-center">
+      {children}
+      <AnchorLink id={headingId} />
+    </h1>
+  );
 }
 
-function H2({ children }: { children: React.ReactNode }) {
-  return <h2 className="mb-4 mt-10 text-lg font-medium text-zinc-800 first:mt-0">{children}</h2>;
+function H2({ children, id }: { children: React.ReactNode; id?: string }) {
+  const headingId = id || generateId(children);
+  return (
+    <h2 id={headingId} className="group mb-4 mt-10 text-lg font-medium text-zinc-800 first:mt-0 scroll-mt-20 flex items-center">
+      {children}
+      <AnchorLink id={headingId} />
+    </h2>
+  );
 }
 
-function H3({ children }: { children: React.ReactNode }) {
-  return <h3 className="mb-2 mt-6 text-sm font-medium text-zinc-700">{children}</h3>;
+function H3({ children, id }: { children: React.ReactNode; id?: string }) {
+  const headingId = id || generateId(children);
+  return (
+    <h3 id={headingId} className="group mb-2 mt-6 text-sm font-medium text-zinc-700 scroll-mt-20 flex items-center">
+      {children}
+      <AnchorLink id={headingId} />
+    </h3>
+  );
 }
 
 function P({ children }: { children: React.ReactNode }) {

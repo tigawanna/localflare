@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { useEffect, useCallback } from 'react';
+import { Link, useParams, useLocation, useNavigate } from 'react-router-dom';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { ArrowLeft01Icon } from '@hugeicons/core-free-icons';
 import { WikiSidebar } from '@/components/wiki/wiki-sidebar';
@@ -7,14 +7,34 @@ import { WikiContent } from '@/components/wiki/wiki-content';
 
 export function WikiPage() {
   const { section } = useParams();
-  const [activeSection, setActiveSection] = useState(section || 'getting-started');
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  // URL is the single source of truth
+  const activeSection = section || 'getting-started';
+
+  // Handle section change from sidebar
+  const handleSectionChange = useCallback((newSection: string) => {
+    navigate(`/docs/${newSection}`, { replace: true });
+  }, [navigate]);
+
+  // Handle hash navigation on page load and when hash changes
+  useEffect(() => {
+    const hash = location.hash.slice(1);
+    if (hash) {
+      const timer = setTimeout(() => {
+        document.getElementById(hash)?.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [location.hash, activeSection]);
 
   return (
     <div className="fixed inset-0 z-50 flex bg-[#fffaf5] text-zinc-900">
       {/* Sidebar */}
       <WikiSidebar
         activeSection={activeSection}
-        onSectionChange={setActiveSection}
+        onSectionChange={handleSectionChange}
       />
 
       {/* Main content */}
