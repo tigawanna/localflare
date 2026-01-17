@@ -8,6 +8,7 @@ import { R2Explorer } from '@/components/r2/R2Explorer'
 import { DOExplorer } from '@/components/do/DOExplorer'
 import { QueuesExplorer } from '@/components/queues/QueuesExplorer'
 import { TailLogs } from '@/components/logs/TailLogs'
+import { NetworkInspector } from '@/components/network/NetworkInspector'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -31,6 +32,7 @@ function App() {
             <Route path="r2" element={<R2Explorer />} />
             <Route path="do" element={<DOExplorer />} />
             <Route path="queues" element={<QueuesExplorer />} />
+            <Route path="network" element={<NetworkInspector />} />
             <Route path="logs" element={<TailLogs />} />
           </Route>
         </Routes>

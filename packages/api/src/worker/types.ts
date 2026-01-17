@@ -21,9 +21,14 @@ export interface Env {
 // Helper to parse manifest from env
 export function getManifest(env: Env): LocalflareManifest {
   try {
-    return JSON.parse(env.LOCALFLARE_MANIFEST || '{}')
+    const parsed = JSON.parse(env.LOCALFLARE_MANIFEST || '{}')
+    // Ensure vars array exists for backward compatibility
+    return {
+      ...parsed,
+      vars: parsed.vars || [],
+    }
   } catch {
-    return { name: 'worker', d1: [], kv: [], r2: [], queues: { producers: [], consumers: [] }, do: [] }
+    return { name: 'worker', d1: [], kv: [], r2: [], queues: { producers: [], consumers: [] }, do: [], vars: [] }
   }
 }
 

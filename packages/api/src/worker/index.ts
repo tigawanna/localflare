@@ -22,6 +22,8 @@ import { createR2Routes } from './routes/r2.js'
 import { createQueuesRoutes } from './routes/queues.js'
 import { createDORoutes } from './routes/do.js'
 import { createLogsRoutes } from './routes/logs.js'
+import { createRequestsRoutes } from './routes/requests.js'
+import { requestStore, logStore } from './utils/request-store.js'
 
 const app = new Hono<{ Bindings: Env }>()
 
@@ -43,6 +45,7 @@ const API_PREFIX = '/__localflare'
 
 // Health check
 app.get(`${API_PREFIX}/health`, (c) => {
+  logStore.log('info', 'Health check: Localflare API is running', undefined, 'system')
   return c.json({
     status: 'ok',
     message: 'Localflare API is running with shared bindings.',
@@ -57,15 +60,37 @@ app.route(`${API_PREFIX}/r2`, createR2Routes())
 app.route(`${API_PREFIX}/queues`, createQueuesRoutes())
 app.route(`${API_PREFIX}/do`, createDORoutes())
 app.route(`${API_PREFIX}/logs`, createLogsRoutes())
+app.route(`${API_PREFIX}/requests`, createRequestsRoutes())
 
 // Proxy all other requests to user's worker (if available via service binding)
+// Captures request/response for the Network inspector
 app.all('*', async (c) => {
   // Check if USER_WORKER service binding exists
   const userWorker = c.env.USER_WORKER as { fetch: typeof fetch } | undefined
 
   if (userWorker) {
-    // Forward request to user's worker
-    return userWorker.fetch(c.req.raw.clone())
+    // Start capturing this request
+    const requestId = requestStore.startRequest(c.req.raw)
+    const startTime = Date.now()
+
+    try {
+      // Forward request to user's worker
+      const response = await userWorker.fetch(c.req.raw.clone())
+
+      // Complete the request capture with response data
+      await requestStore.completeRequest(requestId, response, startTime)
+
+      return response
+    } catch (error) {
+      // Log the error
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+      logStore.log('error', `Request failed: ${errorMessage}`, { requestId, error: errorMessage }, 'request')
+
+      return c.json({
+        error: 'Worker error',
+        message: errorMessage,
+      }, 500)
+    }
   }
 
   // No user worker bound - return 404 for non-API routes

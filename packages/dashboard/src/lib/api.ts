@@ -220,7 +220,7 @@ export interface BindingsResponse {
       producers: { type: string; binding: string; queue: string }[]
       consumers: { type: string; queue: string }[]
     }
-    vars: { type: string; key: string; value: string }[]
+    vars: { type: string; key: string; value: string; isSecret: boolean }[]
   }
 }
 
@@ -298,7 +298,7 @@ export interface LogEntry {
   id: string
   timestamp: string
   level: 'log' | 'info' | 'warn' | 'error' | 'debug'
-  source: 'worker' | 'queue' | 'do' | 'system'
+  source: 'worker' | 'queue' | 'do' | 'system' | 'request'
   message: string
   data?: unknown
 }
@@ -307,4 +307,28 @@ export const logsApi = {
   getRecent: (limit = 100) => fetchApi<{ logs: LogEntry[] }>(`/logs?limit=${limit}`),
   clear: () => fetchApi<{ success: boolean }>('/logs', { method: 'DELETE' }),
   // SSE stream is handled separately via EventSource
+}
+
+// Requests (Network Inspector)
+export interface CapturedRequest {
+  id: string
+  timestamp: string
+  method: string
+  url: string
+  path: string
+  headers: Record<string, string>
+  body?: string
+  response?: {
+    status: number
+    statusText: string
+    headers: Record<string, string>
+    body?: string
+    duration: number
+  }
+}
+
+export const requestsApi = {
+  getAll: () => fetchApi<{ requests: CapturedRequest[]; total: number }>('/requests'),
+  get: (id: string) => fetchApi<CapturedRequest>(`/requests/${id}`),
+  clear: () => fetchApi<{ success: boolean }>('/requests', { method: 'DELETE' }),
 }

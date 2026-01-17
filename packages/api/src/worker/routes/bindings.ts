@@ -44,7 +44,12 @@ export function createBindingsRoutes() {
             queue: consumer.queue,
           })),
         },
-        vars: [], // No vars exposed in sidecar mode
+        vars: (manifest.vars || []).map((v) => ({
+          type: 'var',
+          key: v.key,
+          value: v.isSecret ? '••••••••' : v.value,
+          isSecret: v.isSecret,
+        }))
       },
     })
   })

@@ -1,42 +1,54 @@
 import { Hono } from 'hono'
 import type { Env } from '../types.js'
+import { logStore, sseManager } from '../utils/request-store.js'
 
 export function createLogsRoutes() {
   const app = new Hono<{ Bindings: Env }>()
 
-  // Get recent logs (placeholder - logs are shown in terminal in sidecar mode)
+  // Get recent logs
   app.get('/', (c) => {
-    return c.json({
-      logs: [],
-      message: 'In sidecar mode, logs are displayed in your terminal where localflare is running.',
-    })
+    const limit = parseInt(c.req.query('limit') || '100')
+    const logs = logStore.getRecent(limit)
+    return c.json({ logs })
   })
 
-  // Clear logs (no-op in sidecar mode)
+  // Clear logs
   app.delete('/', (c) => {
+    logStore.clear()
     return c.json({ success: true })
   })
 
-  // SSE stream endpoint (placeholder - returns immediately)
+  // SSE stream endpoint - streams both logs and requests
   app.get('/stream', (c) => {
-    // Return a minimal SSE response that closes immediately
-    // In sidecar mode, logs go directly to the terminal
-    const encoder = new TextEncoder()
-    const stream = new ReadableStream({
-      start(controller) {
-        // Send a comment to keep connection alive briefly, then close
-        controller.enqueue(encoder.encode(': Logs are displayed in your terminal in sidecar mode\n\n'))
-        controller.close()
-      },
-    })
+    const { response } = sseManager.createStream()
+    return response
+  })
 
-    return new Response(stream, {
-      headers: {
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
-        Connection: 'keep-alive',
-      },
-    })
+  // Add a custom log entry (for testing or user-triggered logs)
+  app.post('/', async (c) => {
+    try {
+      const body = await c.req.json<{
+        level?: 'log' | 'info' | 'warn' | 'error' | 'debug'
+        message: string
+        data?: unknown
+        source?: 'worker' | 'queue' | 'do' | 'system'
+      }>()
+
+      if (!body.message) {
+        return c.json({ error: 'message is required' }, 400)
+      }
+
+      logStore.log(
+        body.level || 'info',
+        body.message,
+        body.data,
+        body.source || 'system'
+      )
+
+      return c.json({ success: true })
+    } catch {
+      return c.json({ error: 'Invalid request body' }, 400)
+    }
   })
 
   return app

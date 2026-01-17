@@ -103,4 +103,5 @@ export interface LocalflareManifest {
     }[]
   }
   do: { binding: string; className: string }[]
+  vars: { key: string; value: string; isSecret: boolean }[]
 }

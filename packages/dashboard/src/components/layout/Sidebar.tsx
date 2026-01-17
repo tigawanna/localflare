@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { NavLink } from "react-router-dom"
 import { useQuery } from "@tanstack/react-query"
 import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react"
@@ -12,6 +12,7 @@ import {
   ArrowRight01Icon,
   Home01Icon,
   CommandLineIcon,
+  GlobalIcon,
 } from "@hugeicons/core-free-icons"
 import { bindingsApi } from "@/lib/api"
 import { cn } from "@/lib/utils"
@@ -75,6 +76,12 @@ const navGroups: NavGroup[] = [
     title: "Monitoring",
     items: [
       {
+        icon: GlobalIcon,
+        label: "Network",
+        path: "/network",
+        colorClass: "text-blue-500",
+      },
+      {
         icon: CommandLineIcon,
         label: "Tail Logs",
         path: "/logs",
@@ -84,13 +91,29 @@ const navGroups: NavGroup[] = [
   },
 ]
 
+type ConnectionStatus = 'connected' | 'connecting' | 'disconnected'
+
 export function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false)
+  const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('connecting')
 
-  const { data: bindings } = useQuery({
+  const { data: bindings, isError, isLoading } = useQuery({
     queryKey: ["bindings"],
     queryFn: bindingsApi.getAll,
+    refetchInterval: 5000, // Check connection every 5 seconds
+    retry: 1,
   })
+
+  // Update connection status based on query state
+  useEffect(() => {
+    if (isLoading) {
+      setConnectionStatus('connecting')
+    } else if (isError) {
+      setConnectionStatus('disconnected')
+    } else if (bindings) {
+      setConnectionStatus('connected')
+    }
+  }, [isLoading, isError, bindings])
 
   const getBindingCount = (path: string): number => {
     if (!bindings) return 0
@@ -239,13 +262,31 @@ export function Sidebar() {
       </ScrollArea>
 
       {/* Footer */}
-      {!isCollapsed && (
-        <div className="p-3 border-t border-sidebar-border">
-          <p className="px-2.5 text-[10px] text-muted-foreground">
-            Localflare v0.1.2
-          </p>
+      <div className="p-3 border-t border-sidebar-border">
+        <div className={cn("flex items-center gap-2", isCollapsed ? "justify-center" : "px-2.5")}>
+          <span
+            className={cn(
+              "size-2 rounded-full shrink-0",
+              connectionStatus === 'connected' && "bg-green-500",
+              connectionStatus === 'connecting' && "bg-yellow-500 animate-pulse",
+              connectionStatus === 'disconnected' && "bg-red-500"
+            )}
+          />
+          {!isCollapsed && (
+            <div className="min-w-0">
+              <p className="text-[10px] text-muted-foreground truncate">
+                {connectionStatus === 'connected' && "Connected"}
+                {connectionStatus === 'connecting' && "Connecting..."}
+                {connectionStatus === 'disconnected' && "Disconnected"}
+              </p>
+              <p className="text-[10px] text-muted-foreground/60 truncate">
+                {connectionStatus === 'connected' && `Port ${new URLSearchParams(window.location.search).get('port') || '8787'}`}
+                {connectionStatus === 'disconnected' && "Check if wrangler is running"}
+              </p>
+            </div>
+          )}
         </div>
-      )}
+      </div>
     </aside>
   )
 }

@@ -207,9 +207,9 @@ export function Home() {
 
           {/* Environment Variables - not clickable */}
           {bindings?.bindings.vars && bindings.bindings.vars.length > 0 && (
-            <div className="border border-border rounded-lg bg-card">
+            <div className="border border-border rounded-lg bg-card md:col-span-2 lg:col-span-3">
               <div className="p-4">
-                <div className="flex items-start justify-between">
+                <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-3">
                     <div className="p-2 rounded-lg bg-muted">
                       <HugeiconsIcon
@@ -221,30 +221,35 @@ export function Home() {
                     <div>
                       <h3 className="font-medium text-sm">Environment Variables</h3>
                       <p className="text-xs text-muted-foreground mt-0.5">
-                        {bindings.bindings.vars.length} variable(s)
+                        {bindings.bindings.vars.length} variable{bindings.bindings.vars.length !== 1 ? 's' : ''} configured
                       </p>
                     </div>
                   </div>
                 </div>
-                {bindings.bindings.vars.length > 0 && (
-                  <div className="mt-3 pt-3 border-t border-border">
-                    <div className="flex flex-wrap gap-1.5">
-                      {bindings.bindings.vars.slice(0, 3).map((v) => (
-                        <span
-                          key={v.key}
-                          className="text-xs font-mono px-2 py-0.5 bg-muted rounded"
-                        >
-                          {v.key}
+                <div className="border-t border-border pt-3">
+                  <div className="grid gap-2">
+                    {bindings.bindings.vars.map((v) => (
+                      <div
+                        key={v.key}
+                        className="flex items-center gap-2 text-xs font-mono bg-muted/50 rounded px-3 py-2"
+                      >
+                        <span className="text-foreground font-medium min-w-[120px]">{v.key}</span>
+                        <span className="text-muted-foreground">=</span>
+                        <span className={cn(
+                          "truncate",
+                          v.isSecret ? "text-muted-foreground/60 italic" : "text-foreground"
+                        )}>
+                          {v.isSecret ? "••••••••" : `"${v.value}"`}
                         </span>
-                      ))}
-                      {bindings.bindings.vars.length > 3 && (
-                        <span className="text-xs text-muted-foreground px-2 py-0.5">
-                          +{bindings.bindings.vars.length - 3} more
-                        </span>
-                      )}
-                    </div>
+                        {v.isSecret && (
+                          <span className="ml-auto text-[10px] bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 px-1.5 py-0.5 rounded">
+                            secret
+                          </span>
+                        )}
+                      </div>
+                    ))}
                   </div>
-                )}
+                </div>
               </div>
             </div>
           )}

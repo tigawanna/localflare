@@ -33,6 +33,30 @@ export function getApiWorkerPath(): string {
 /**
  * Create manifest from wrangler config
  */
+/**
+ * Check if a var value looks like a secret (common patterns)
+ */
+function looksLikeSecret(key: string, value: string): boolean {
+  const secretPatterns = [
+    /secret/i,
+    /password/i,
+    /api[_-]?key/i,
+    /token/i,
+    /auth/i,
+    /private/i,
+    /credential/i,
+  ]
+  // Check key name
+  if (secretPatterns.some(pattern => pattern.test(key))) {
+    return true
+  }
+  // Check if value looks like a token/key (long alphanumeric strings)
+  if (value.length > 20 && /^[A-Za-z0-9_-]+$/.test(value)) {
+    return true
+  }
+  return false
+}
+
 export function createManifest(config: WranglerConfig): LocalflareManifest {
   return {
     name: config.name || 'worker',
@@ -63,6 +87,11 @@ export function createManifest(config: WranglerConfig): LocalflareManifest {
     do: (config.durable_objects?.bindings || []).map((d) => ({
       binding: d.name,
       className: d.class_name,
+    })),
+    vars: Object.entries(config.vars || {}).map(([key, value]) => ({
+      key,
+      value,
+      isSecret: looksLikeSecret(key, value),
     })),
   }
 }
