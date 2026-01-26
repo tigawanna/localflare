@@ -209,23 +209,28 @@ const tweetsRow2: Tweet[] = [
 
 export function Testimonials() {
   return (
-    <section className="py-16 border-t border-zinc-200 overflow-hidden">
-      <div className="mx-auto max-w-6xl px-8">
-        <div className="text-center mb-12">
-          <p className="text-xs font-medium uppercase tracking-widest text-orange-600">
+    <section className="py-32 border-t border-white/5 overflow-hidden relative">
+      <div className="mx-auto max-w-6xl px-6">
+        <div className="text-center mb-16">
+          <p className="text-sm font-medium text-[#f97316] mb-3">
             Community Love
           </p>
-          <h2 className="mt-3 text-2xl font-bold tracking-tight text-zinc-800">
+          <h2 className="text-3xl font-semibold text-zinc-100">
             What developers are saying
           </h2>
         </div>
       </div>
 
       {/* Marquee Container - Full width */}
-      <div className="space-y-4">
+      <div className="space-y-6 relative">
+        {/* Left fade gradient */}
+        <div className="absolute left-0 top-0 bottom-0 w-40 bg-gradient-to-r from-[#0d0d0d] to-transparent z-10 pointer-events-none" />
+        {/* Right fade gradient */}
+        <div className="absolute right-0 top-0 bottom-0 w-40 bg-gradient-to-l from-[#0d0d0d] to-transparent z-10 pointer-events-none" />
+
         {/* Row 1 - moves left */}
         <div className="relative">
-          <div className="flex animate-marquee-left gap-4">
+          <div className="flex animate-marquee-left gap-6">
             {[...tweetsRow1, ...tweetsRow1].map((tweet, index) => (
               <TweetCard key={`${tweet.id}-${index}`} tweet={tweet} />
             ))}
@@ -234,7 +239,7 @@ export function Testimonials() {
 
         {/* Row 2 - moves right */}
         <div className="relative">
-          <div className="flex animate-marquee-right gap-4">
+          <div className="flex animate-marquee-right gap-6">
             {[...tweetsRow2, ...tweetsRow2].map((tweet, index) => (
               <TweetCard key={`${tweet.id}-${index}`} tweet={tweet} />
             ))}
@@ -242,7 +247,7 @@ export function Testimonials() {
         </div>
       </div>
 
-      {/* Gradient overlays */}
+      {/* Animations */}
       <style>{`
         @keyframes marquee-left {
           0% { transform: translateX(0); }
@@ -253,10 +258,10 @@ export function Testimonials() {
           100% { transform: translateX(0); }
         }
         .animate-marquee-left {
-          animation: marquee-left 80s linear infinite;
+          animation: marquee-left 60s linear infinite;
         }
         .animate-marquee-right {
-          animation: marquee-right 80s linear infinite;
+          animation: marquee-right 60s linear infinite;
         }
         .animate-marquee-left:hover,
         .animate-marquee-right:hover {
@@ -273,14 +278,14 @@ function TweetCard({ tweet }: { tweet: Tweet }) {
       href={tweet.tweetUrl}
       target="_blank"
       rel="noopener noreferrer"
-      className="group block w-85 shrink-0 rounded-xl border border-zinc-200 bg-white p-5 transition-all hover:border-zinc-300 hover:shadow-lg hover:shadow-zinc-900/5"
+      className="group block w-80 shrink-0 rounded-2xl bg-white p-5 shadow-lg shadow-black/5 transition-all duration-300 hover:shadow-2xl hover:shadow-orange-500/10 hover:-translate-y-1"
     >
       {/* Header */}
       <div className="flex items-start gap-3">
         <img
           src={tweet.avatar}
           alt={tweet.author}
-          className="size-10 rounded-full bg-zinc-100"
+          className="size-10 rounded-full bg-zinc-100 ring-2 ring-zinc-100"
         />
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
@@ -289,7 +294,7 @@ function TweetCard({ tweet }: { tweet: Tweet }) {
             </span>
             {/* X/Twitter logo */}
             <svg
-              className="size-4 text-zinc-400 ml-auto shrink-0"
+              className="size-4 text-zinc-300 ml-auto shrink-0 group-hover:text-zinc-900 transition-colors"
               viewBox="0 0 24 24"
               fill="currentColor"
             >
@@ -301,13 +306,13 @@ function TweetCard({ tweet }: { tweet: Tweet }) {
       </div>
 
       {/* Content */}
-      <p className="mt-3 text-sm text-zinc-700 leading-relaxed line-clamp-3">
+      <p className="mt-3 text-sm text-zinc-600 leading-relaxed line-clamp-3">
         {tweet.content}
       </p>
 
       {/* Hover indicator */}
       <div className="mt-3 text-xs text-zinc-400 opacity-0 group-hover:opacity-100 transition-opacity">
-        <span className="text-orange-500">View on X →</span>
+        <span className="text-orange-500 font-medium">View on X →</span>
       </div>
     </a>
   );
