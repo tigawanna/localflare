@@ -16,9 +16,8 @@ import {
   XIcon,
   DatabaseIcon,
 } from '@phosphor-icons/react'
-import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { cn } from '@cloudflare/kumo'
+import { Button, cn } from '@cloudflare/kumo'
 import type { QueryHistoryEntry } from './types'
 
 // ============================================================================
@@ -236,7 +235,7 @@ export function QueryHistory({
             variant="ghost"
             size="sm"
             onClick={onClear}
-            className="h-6 px-2 text-[10px] text-kumo-strong hover:text-kumo-danger"
+            className="px-2 text-[10px] text-kumo-strong hover:text-kumo-danger"
           >
             <TrashIcon size={12} className="mr-1" />
             Clear

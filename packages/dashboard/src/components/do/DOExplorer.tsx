@@ -3,7 +3,7 @@ import { useQuery, useMutation } from "@tanstack/react-query"
 import { StackIcon, PlayIcon, PlusIcon, ArrowsClockwiseIcon } from "@phosphor-icons/react"
 import { doApi, bindingsApi, type DurableObject } from "@/lib/api"
 import { DataTable, DataTableLoading, type Column } from "@/components/ui/data-table"
-import { Button } from "@/components/ui/button"
+import { Button, Dialog } from "@cloudflare/kumo"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
@@ -14,15 +14,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
 
 import { type DOInstance } from "@/lib/api"
 
@@ -202,24 +193,23 @@ export function DOExplorer() {
                 variant="ghost"
                 onClick={() => refetchInstances()}
                 disabled={isLoadingInstances}
+                aria-label="Refresh instances"
               >
                 <ArrowsClockwiseIcon size={16} className={isLoadingInstances ? 'animate-spin' : ''} />
               </Button>
-              <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button size="sm" variant="outline">
+              <Dialog.Root open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+                <Dialog.Trigger render={(props) => (
+                  <Button size="sm" variant="secondary" {...props}>
                     <PlusIcon size={16} className="mr-2" />
                     Create Instance
                   </Button>
-                </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Create Durable Object Instance</DialogTitle>
-                  <DialogDescription>
-                    Get or create a Durable Object instance. Use a name for deterministic IDs (e.g., "user-123").
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="space-y-4 py-4">
+                )} />
+              <Dialog size="base" className="p-6">
+                <Dialog.Title className="text-lg font-semibold text-kumo-default">Create Durable Object Instance</Dialog.Title>
+                <Dialog.Description className="text-sm text-kumo-strong mt-1">
+                  Get or create a Durable Object instance. Use a name for deterministic IDs (e.g., "user-123").
+                </Dialog.Description>
+                <div className="space-y-4 py-4 mt-4">
                   <div className="space-y-2">
                     <Label>Binding</Label>
                     <Select value={selectedBinding} onValueChange={setSelectedBinding}>
@@ -252,14 +242,14 @@ export function DOExplorer() {
                     </div>
                   )}
                 </div>
-                <DialogFooter>
-                  <Button variant="outline" onClick={() => setCreateDialogOpen(false)}>Cancel</Button>
-                  <Button onClick={handleCreateInstance} disabled={!selectedBinding || createInstanceMutation.isPending}>
+                <div className="flex justify-end gap-2 mt-4 pt-4 border-t border-kumo-line">
+                  <Dialog.Close render={(props) => <Button variant="secondary" {...props}>Cancel</Button>} />
+                  <Button variant="primary" onClick={handleCreateInstance} disabled={!selectedBinding || createInstanceMutation.isPending}>
                     {createInstanceMutation.isPending ? "Creating..." : "Create"}
                   </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
+                </div>
+              </Dialog>
+            </Dialog.Root>
             </div>
           </div>
 
@@ -301,7 +291,7 @@ export function DOExplorer() {
                   </SelectContent>
                 </Select>
                 <Input placeholder="/path" value={requestPath} onChange={(e) => setRequestPath(e.target.value)} className="flex-1" />
-                <Button onClick={handleSendRequest} disabled={fetchMutation.isPending}>
+                <Button variant="primary" onClick={handleSendRequest} disabled={fetchMutation.isPending}>
                   <PlayIcon size={16} className="mr-2" />
                   {fetchMutation.isPending ? "Sending..." : "Send"}
                 </Button>

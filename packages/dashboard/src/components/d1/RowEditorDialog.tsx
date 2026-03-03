@@ -7,19 +7,10 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { PlusIcon, PencilSimpleIcon, KeyIcon } from '@phosphor-icons/react'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
-import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { cn } from '@cloudflare/kumo'
+import { Button, Dialog, cn } from '@cloudflare/kumo'
 import type { D1Row, D1CellValue, D1TableSchema, D1Column } from './types'
 
 // ============================================================================
@@ -389,27 +380,25 @@ export function RowEditorDialog({
   }, [validate, formData, schema, isEditing, onSave, isSqlExpression])
   
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg max-h-[80vh] flex flex-col overflow-hidden">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            {isEditing ? <PencilSimpleIcon size={20} /> : <PlusIcon size={20} />}
-            {isEditing ? 'Edit Row' : 'Add Row'}
-          </DialogTitle>
-          <DialogDescription>
-            {isEditing 
-              ? `Editing row in ${schema.name}` 
-              : `Add a new row to ${schema.name}`
-            }
-          </DialogDescription>
-        </DialogHeader>
-        
-        <ScrollArea className="flex-1 min-h-0 -mx-6 px-6 overflow-y-auto">
+    <Dialog.Root open={open} onOpenChange={onOpenChange}>
+      <Dialog size="lg" className="p-6 max-h-[80vh] flex flex-col overflow-hidden">
+        <Dialog.Title className="text-lg font-semibold text-kumo-default flex items-center gap-2">
+          {isEditing ? <PencilSimpleIcon size={20} /> : <PlusIcon size={20} />}
+          {isEditing ? 'Edit Row' : 'Add Row'}
+        </Dialog.Title>
+        <Dialog.Description className="text-sm text-kumo-strong mt-1">
+          {isEditing
+            ? `Editing row in ${schema.name}`
+            : `Add a new row to ${schema.name}`
+          }
+        </Dialog.Description>
+
+        <ScrollArea className="flex-1 min-h-0 -mx-6 px-6 overflow-y-auto mt-4">
           <div className="space-y-4 py-4 pr-2">
             {schema.columns.map(col => {
               const isPK = schema.primaryKeys.includes(col.name)
               const isAutoIncrement = isPK && col.type.toUpperCase() === 'INTEGER'
-              
+
               return (
                 <FormField
                   key={col.name}
@@ -425,24 +414,19 @@ export function RowEditorDialog({
             })}
           </div>
         </ScrollArea>
-        
-        <DialogFooter>
+
+        <div className="flex justify-end gap-2 mt-4 pt-4 border-t border-kumo-line">
+          <Dialog.Close render={(props) => <Button variant="secondary" {...props}>Cancel</Button>} />
           <Button
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            disabled={isSaving}
-          >
-            Cancel
-          </Button>
-          <Button
+            variant="primary"
             onClick={handleSave}
             disabled={isSaving}
           >
             {isSaving ? 'Saving...' : isEditing ? 'Save Changes' : 'Add Row'}
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </div>
+      </Dialog>
+    </Dialog.Root>
   )
 }
 

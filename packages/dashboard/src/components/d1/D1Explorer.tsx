@@ -18,8 +18,7 @@ import {
   ClockIcon,
 } from '@phosphor-icons/react'
 import { d1Api } from '@/lib/api'
-import { cn } from '@cloudflare/kumo'
-import { Button } from '@/components/ui/button'
+import { Button, cn } from '@cloudflare/kumo'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { DataTableLoading } from '@/components/ui/data-table'
 import { Toaster, toast } from '@/components/ui/toaster'
@@ -396,10 +395,10 @@ export function D1Explorer() {
               <div className="flex items-center gap-2">
                 {activeTab === 'data' && selectedTable && (
                   <>
-                    <Button variant="ghost" size="sm" onClick={handleRefresh} className="h-7 text-xs">
+                    <Button variant="ghost" size="sm" onClick={handleRefresh} className="text-xs">
                       <ArrowsClockwiseIcon size={14} className="mr-1.5" /> Refresh
                     </Button>
-                    <Button size="sm" onClick={() => { setEditingRow(null); setShowRowEditor(true) }} className="h-7 text-xs">
+                    <Button variant="primary" size="sm" onClick={() => { setEditingRow(null); setShowRowEditor(true) }} className="text-xs">
                       <PlusIcon size={14} className="mr-1.5" /> Add Row
                     </Button>
                   </>
@@ -435,7 +434,7 @@ export function D1Explorer() {
                       <kbd className="px-1.5 py-0.5 bg-kumo-fill rounded text-[9px] font-mono">Enter</kbd><span className="ml-1">to run</span>
                     </span>
                   </div>
-                  <Button onClick={handleRunQuery} disabled={!selectedDb || !sqlQuery.trim() || queryMutation.isPending} size="sm">
+                  <Button variant="primary" onClick={handleRunQuery} disabled={!selectedDb || !sqlQuery.trim() || queryMutation.isPending} size="sm">
                     <PlayIcon size={14} className="mr-1.5" /> {queryMutation.isPending ? 'Running...' : 'Run Query'}
                   </Button>
                 </div>

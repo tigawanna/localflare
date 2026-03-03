@@ -6,19 +6,10 @@
 
 import { useState, useCallback } from 'react'
 import { SparkleIcon } from '@phosphor-icons/react'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
-import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { cn } from '@cloudflare/kumo'
+import { Button, Dialog, cn } from '@cloudflare/kumo'
 import { getColumnGeneratorDescription } from './dummy-data-generator'
 import type { D1TableSchema } from './types'
 
@@ -59,19 +50,17 @@ export function DummyDataGeneratorDialog({
   }, [])
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <SparkleIcon size={20} className="text-kumo-brand" />
-            Generate Dummy Data
-          </DialogTitle>
-          <DialogDescription>
-            Insert random test data into <span className="font-medium text-kumo-default">{schema.name}</span>
-          </DialogDescription>
-        </DialogHeader>
+    <Dialog.Root open={open} onOpenChange={onOpenChange}>
+      <Dialog size="base" className="p-6">
+        <Dialog.Title className="text-lg font-semibold text-kumo-default flex items-center gap-2">
+          <SparkleIcon size={20} className="text-kumo-brand" />
+          Generate Dummy Data
+        </Dialog.Title>
+        <Dialog.Description className="text-sm text-kumo-strong mt-1">
+          Insert random test data into <span className="font-medium text-kumo-default">{schema.name}</span>
+        </Dialog.Description>
 
-        <div className="space-y-4 py-4">
+        <div className="space-y-4 py-4 mt-4">
           {/* Row count input */}
           <div className="space-y-2">
             <Label htmlFor="row-count">Number of rows to generate</Label>
@@ -139,15 +128,10 @@ export function DummyDataGeneratorDialog({
           )}
         </div>
 
-        <DialogFooter>
+        <div className="flex justify-end gap-2 mt-4 pt-4 border-t border-kumo-line">
+          <Dialog.Close render={(props) => <Button variant="secondary" {...props}>Cancel</Button>} />
           <Button
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            disabled={isGenerating}
-          >
-            Cancel
-          </Button>
-          <Button
+            variant="primary"
             onClick={handleGenerate}
             disabled={isGenerating || rowCount < 1}
           >
@@ -160,8 +144,8 @@ export function DummyDataGeneratorDialog({
               </>
             )}
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </div>
+      </Dialog>
+    </Dialog.Root>
   )
 }

@@ -8,8 +8,7 @@ import {
   CopyIcon,
 } from "@phosphor-icons/react"
 import { kvApi } from "@/lib/api"
-import { cn } from "@cloudflare/kumo"
-import { Button } from "@/components/ui/button"
+import { Button, cn } from "@cloudflare/kumo"
 import { Input } from "@/components/ui/input"
 import { SearchInput } from "@/components/ui/search-input"
 
@@ -115,7 +114,7 @@ export function KVExplorer() {
             <p className="text-sm text-kumo-strong mt-1">Manage your Workers KV key-value storage</p>
           </div>
           {selectedNs && (
-            <Button size="sm" onClick={() => setShowAddForm(true)}>
+            <Button variant="primary" size="sm" onClick={() => setShowAddForm(true)}>
               <PlusIcon size={14} className="mr-1.5" />
               Add Key
             </Button>
@@ -212,7 +211,7 @@ export function KVExplorer() {
                     <p className="text-sm text-kumo-strong">
                       {searchPrefix ? "No keys match your search" : "No keys in this namespace"}
                     </p>
-                    <Button variant="outline" size="sm" className="mt-3" onClick={() => setShowAddForm(true)}>
+                    <Button variant="secondary" size="sm" className="mt-3" onClick={() => setShowAddForm(true)}>
                       <PlusIcon size={14} className="mr-1.5" />
                       Add Key
                     </Button>
@@ -256,12 +255,13 @@ export function KVExplorer() {
                 </div>
                 <div className="flex gap-2">
                   <Button
+                    variant="primary"
                     onClick={() => setValueMutation.mutate({ key: newKey, value: newValue })}
                     disabled={!newKey || !newValue || setValueMutation.isPending}
                   >
                     Save Key
                   </Button>
-                  <Button variant="outline" onClick={() => setShowAddForm(false)}>Cancel</Button>
+                  <Button variant="secondary" onClick={() => setShowAddForm(false)}>Cancel</Button>
                 </div>
               </div>
             </div>
@@ -281,7 +281,7 @@ export function KVExplorer() {
                   )}
                 </div>
                 <div className="flex gap-2 shrink-0">
-                  <Button variant="outline" size="sm" onClick={() => copyToClipboard(formattedValue?.formatted || "")}>
+                  <Button variant="secondary" size="sm" onClick={() => copyToClipboard(formattedValue?.formatted || "")}>
                     <CopyIcon size={14} className="mr-1.5" /> Copy
                   </Button>
                   <Button

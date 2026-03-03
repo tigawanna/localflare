@@ -41,7 +41,6 @@ import {
   DatabaseIcon,
   SparkleIcon,
 } from '@phosphor-icons/react'
-import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import {
@@ -54,7 +53,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
-import { cn } from '@cloudflare/kumo'
+import { Button, cn } from '@cloudflare/kumo'
 import { EditableCell } from './EditableCell'
 import type { D1Row, D1CellValue, D1TableSchema, PaginationState, FilterOperator } from './types'
 
@@ -201,10 +200,10 @@ function ColumnFilterPopover({ columnId, columnName, filter, onFilterChange }: C
           )}
 
           <div className="flex gap-2">
-            <Button size="sm" className="flex-1 h-7 text-xs" onClick={handleApply}>
+            <Button variant="primary" size="sm" className="flex-1 text-xs" onClick={handleApply}>
               Apply
             </Button>
-            <Button size="sm" variant="outline" className="h-7 text-xs" onClick={handleClear}>
+            <Button size="sm" variant="secondary" className="text-xs" onClick={handleClear}>
               Clear
             </Button>
           </div>
@@ -257,20 +256,20 @@ function PaginationControls({
 
       <div className="flex items-center gap-1">
         <Button
-          variant="outline"
+          variant="secondary"
           size="sm"
           onClick={() => onPageChange(0)}
           disabled={pageIndex === 0}
-          className="h-7 px-2 text-xs"
+          className="px-2 text-xs"
         >
           First
         </Button>
         <Button
-          variant="outline"
+          variant="secondary"
           size="sm"
           onClick={() => onPageChange(pageIndex - 1)}
           disabled={pageIndex === 0}
-          className="h-7 px-2 text-xs"
+          className="px-2 text-xs"
         >
           Prev
         </Button>
@@ -278,20 +277,20 @@ function PaginationControls({
           Page {pageIndex + 1} of {totalPages || 1}
         </span>
         <Button
-          variant="outline"
+          variant="secondary"
           size="sm"
           onClick={() => onPageChange(pageIndex + 1)}
           disabled={pageIndex >= totalPages - 1}
-          className="h-7 px-2 text-xs"
+          className="px-2 text-xs"
         >
           Next
         </Button>
         <Button
-          variant="outline"
+          variant="secondary"
           size="sm"
           onClick={() => onPageChange(totalPages - 1)}
           disabled={pageIndex >= totalPages - 1}
-          className="h-7 px-2 text-xs"
+          className="px-2 text-xs"
         >
           Last
         </Button>
@@ -324,20 +323,20 @@ function RowActions({ row, onEdit, onDelete }: RowActionsProps) {
       {onEdit && (
         <Button
           variant="ghost"
-          size="icon"
-          className="h-6 w-6"
+          shape="square"
+          size="xs"
           onClick={onEdit}
-          title="Edit row"
+          aria-label="Edit row"
         >
           <PencilSimpleIcon size={14} />
         </Button>
       )}
       <Button
         variant="ghost"
-        size="icon"
-        className="h-6 w-6"
+        shape="square"
+        size="xs"
         onClick={handleCopy}
-        title="Copy as JSON"
+        aria-label="Copy as JSON"
       >
         {copied ? (
           <CheckIcon size={14} className="text-green-500" />
@@ -348,10 +347,11 @@ function RowActions({ row, onEdit, onDelete }: RowActionsProps) {
       {onDelete && (
         <Button
           variant="ghost"
-          size="icon"
-          className="h-6 w-6 hover:text-kumo-danger"
+          shape="square"
+          size="xs"
+          className="hover:text-kumo-danger"
           onClick={onDelete}
-          title="Delete row"
+          aria-label="Delete row"
         >
           <TrashIcon size={14} />
         </Button>
@@ -695,7 +695,7 @@ export function EditableDataTable({
         {/* Column Visibility */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5">
+            <Button variant="secondary" size="sm" className="text-xs gap-1.5">
               <EyeIcon size={14} />
               Columns
             </Button>
@@ -722,9 +722,9 @@ export function EditableDataTable({
         {/* Generate Data Button */}
         {onGenerateData && (
           <Button
-            variant="outline"
+            variant="secondary"
             size="sm"
-            className="h-8 text-xs gap-1.5"
+            className="text-xs gap-1.5"
             onClick={onGenerateData}
           >
             <SparkleIcon size={14} />
@@ -735,9 +735,9 @@ export function EditableDataTable({
         {/* Filter count badge */}
         {hasFilters && (
           <Button
-            variant="outline"
+            variant="secondary"
             size="sm"
-            className="h-8 text-xs gap-1.5"
+            className="text-xs gap-1.5"
             onClick={clearAllFilters}
           >
             <FunnelIcon size={14} />
@@ -778,7 +778,7 @@ export function EditableDataTable({
           <Button
             variant="ghost"
             size="sm"
-            className="h-7 text-xs text-kumo-danger hover:text-kumo-danger"
+            className="text-xs text-kumo-danger hover:text-kumo-danger"
             onClick={() => {
               const selectedRows = table.getSelectedRowModel().rows
               selectedRows.forEach(row => onRowDelete?.(row.original))
@@ -791,7 +791,7 @@ export function EditableDataTable({
           <Button
             variant="ghost"
             size="sm"
-            className="h-7 text-xs"
+            className="text-xs"
             onClick={() => setRowSelection({})}
           >
             Clear Selection

@@ -7,9 +7,8 @@ import {
   TerminalIcon,
 } from "@phosphor-icons/react"
 import { logsApi, getApiBase, type LogEntry } from "@/lib/api"
-import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { cn } from "@cloudflare/kumo"
+import { Button, cn } from "@cloudflare/kumo"
 
 const levelColors: Record<LogEntry["level"], string> = {
   log: "text-kumo-default",
@@ -90,7 +89,7 @@ export function TailLogs() {
 
         <div className="mt-4 flex items-center gap-2">
           <Button
-            variant={isPaused ? "default" : "outline"}
+            variant={isPaused ? "primary" : "secondary"}
             size="sm"
             onClick={() => setIsPaused(!isPaused)}
           >
@@ -99,7 +98,7 @@ export function TailLogs() {
           </Button>
 
           <Button
-            variant="outline"
+            variant="secondary"
             size="sm"
             onClick={() => clearMutation.mutate()}
             disabled={clearMutation.isPending}

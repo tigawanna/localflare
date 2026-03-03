@@ -170,3 +170,9 @@
     @apply font-sans;
   }
 }
+
+/* Kumo Dialog z-index — ensure backdrop and popup render above app content (sticky headers etc.) */
+[data-open].fixed,
+[data-closed].fixed {
+  z-index: 50;
+}

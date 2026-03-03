@@ -14,24 +14,15 @@ import {
   TrashIcon,
 } from "@phosphor-icons/react"
 import { r2Api } from "@/lib/api"
-import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
 import {
   ResizablePanelGroup,
   ResizablePanel,
   ResizableHandle,
 } from "@/components/ui/resizable"
-import { cn } from "@cloudflare/kumo"
+import { Button, Dialog, cn } from "@cloudflare/kumo"
 import { formatBytes, formatDate } from "@/lib/utils"
 import { FileTree } from "./FileTree"
 
@@ -364,25 +355,24 @@ export function R2Explorer() {
           <Button
             variant="ghost"
             size="sm"
-            className="h-8"
             onClick={() => refetchObjects()}
+            aria-label="Refresh"
           >
             <ArrowsClockwiseIcon size={16} />
           </Button>
           {selectedBucket && (
             <>
               <Button
-                variant="outline"
+                variant="secondary"
                 size="sm"
-                className="h-8"
                 onClick={() => setCreateFolderOpen(true)}
               >
                 <FolderPlusIcon size={16} className="mr-1.5" />
                 New Folder
               </Button>
               <Button
+                variant="primary"
                 size="sm"
-                className="h-8"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploadMutation.isPending}
               >
@@ -478,9 +468,9 @@ export function R2Explorer() {
                 <FolderIcon size={40} className="opacity-30 mb-2" />
                 <p className="text-xs">Empty bucket</p>
                 <Button
-                  variant="link"
+                  variant="ghost"
                   size="sm"
-                  className="mt-2 h-auto p-0 text-xs"
+                  className="mt-2 text-xs"
                   onClick={() => fileInputRef.current?.click()}
                 >
                   Upload files
@@ -513,14 +503,13 @@ export function R2Explorer() {
                   </div>
                 </div>
                 <div className="flex gap-2 shrink-0">
-                  <Button variant="outline" size="sm" className="h-8" onClick={handleDownload}>
+                  <Button variant="secondary" size="sm" onClick={handleDownload}>
                     <DownloadSimpleIcon size={16} className="mr-1.5" />
                     Download
                   </Button>
                   <Button
                     variant="destructive"
                     size="sm"
-                    className="h-8"
                     onClick={() => deleteObjectMutation.mutate(selectedObject)}
                     disabled={deleteObjectMutation.isPending}
                   >
@@ -575,8 +564,8 @@ export function R2Explorer() {
                   </div>
                 </div>
                 <Button
+                  variant="primary"
                   size="sm"
-                  className="h-8"
                   onClick={() => fileInputRef.current?.click()}
                   disabled={uploadMutation.isPending}
                 >
@@ -592,17 +581,16 @@ export function R2Explorer() {
                 <p className="text-xs mt-1">/{selectedObject}</p>
                 <div className="flex gap-2 mt-4">
                   <Button
-                    variant="outline"
+                    variant="secondary"
                     size="sm"
-                    className="h-8"
                     onClick={() => setCreateFolderOpen(true)}
                   >
                     <FolderPlusIcon size={16} className="mr-1.5" />
                     New subfolder
                   </Button>
                   <Button
+                    variant="primary"
                     size="sm"
-                    className="h-8"
                     onClick={() => fileInputRef.current?.click()}
                   >
                     <UploadSimpleIcon size={16} className="mr-1.5" />
@@ -623,17 +611,15 @@ export function R2Explorer() {
       </ResizablePanelGroup>
 
       {/* Create Folder Dialog */}
-      <Dialog open={createFolderOpen} onOpenChange={setCreateFolderOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Create New Folder</DialogTitle>
-            <DialogDescription>
-              {currentFolderPath
-                ? `Create folder in /${currentFolderPath}`
-                : `Create folder in ${selectedBucket}`}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="py-4">
+      <Dialog.Root open={createFolderOpen} onOpenChange={setCreateFolderOpen}>
+        <Dialog size="base" className="p-6">
+          <Dialog.Title className="text-lg font-semibold text-kumo-default">Create New Folder</Dialog.Title>
+          <Dialog.Description className="text-sm text-kumo-strong mt-1">
+            {currentFolderPath
+              ? `Create folder in /${currentFolderPath}`
+              : `Create folder in ${selectedBucket}`}
+          </Dialog.Description>
+          <div className="py-4 mt-4">
             <Label htmlFor="folder-name" className="text-sm font-medium">
               Folder Name
             </Label>
@@ -649,16 +635,14 @@ export function R2Explorer() {
               autoFocus
             />
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setCreateFolderOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleCreateFolder} disabled={!newFolderName.trim()}>
+          <div className="flex justify-end gap-2 mt-4 pt-4 border-t border-kumo-line">
+            <Dialog.Close render={(props) => <Button variant="secondary" {...props}>Cancel</Button>} />
+            <Button variant="primary" onClick={handleCreateFolder} disabled={!newFolderName.trim()}>
               Create
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </div>
+        </Dialog>
+      </Dialog.Root>
     </div>
   )
 }

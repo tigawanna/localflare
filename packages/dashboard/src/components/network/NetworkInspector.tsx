@@ -9,10 +9,9 @@ import {
   XIcon,
 } from "@phosphor-icons/react"
 import { requestsApi, getApiBase, type CapturedRequest } from "@/lib/api"
-import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Badge } from "@/components/ui/badge"
-import { cn } from "@cloudflare/kumo"
+import { Button, cn } from "@cloudflare/kumo"
 
 const methodColors: Record<string, string> = {
   GET: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
@@ -170,7 +169,7 @@ export function NetworkInspector() {
 
         <div className="mt-4 flex items-center gap-2">
           <Button
-            variant={isPaused ? "default" : "outline"}
+            variant={isPaused ? "primary" : "secondary"}
             size="sm"
             onClick={() => setIsPaused(!isPaused)}
           >
@@ -179,7 +178,7 @@ export function NetworkInspector() {
           </Button>
 
           <Button
-            variant="outline"
+            variant="secondary"
             size="sm"
             onClick={() => clearMutation.mutate()}
             disabled={clearMutation.isPending}
@@ -311,9 +310,10 @@ export function NetworkInspector() {
               </div>
               <Button
                 variant="ghost"
-                size="icon"
-                className="size-7"
+                shape="square"
+                size="sm"
                 onClick={() => setSelectedRequest(null)}
+                aria-label="Close details"
               >
                 <XIcon size={16} />
               </Button>
