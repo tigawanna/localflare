@@ -5,21 +5,11 @@
  */
 
 import { useState, useCallback } from 'react'
-import { HugeiconsIcon } from '@hugeicons/react'
-import { SparklesIcon } from '@hugeicons/core-free-icons'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
-import { Button } from '@/components/ui/button'
+import { SparkleIcon } from '@phosphor-icons/react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { cn } from '@/lib/utils'
+import { Button, Dialog, cn } from '@cloudflare/kumo'
 import { getColumnGeneratorDescription } from './dummy-data-generator'
 import type { D1TableSchema } from './types'
 
@@ -60,19 +50,17 @@ export function DummyDataGeneratorDialog({
   }, [])
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <HugeiconsIcon icon={SparklesIcon} className="size-5 text-primary" />
-            Generate Dummy Data
-          </DialogTitle>
-          <DialogDescription>
-            Insert random test data into <span className="font-medium text-foreground">{schema.name}</span>
-          </DialogDescription>
-        </DialogHeader>
+    <Dialog.Root open={open} onOpenChange={onOpenChange}>
+      <Dialog size="base" className="p-6">
+        <Dialog.Title className="text-lg font-semibold text-kumo-default flex items-center gap-2">
+          <SparkleIcon size={20} className="text-kumo-brand" />
+          Generate Dummy Data
+        </Dialog.Title>
+        <Dialog.Description className="text-sm text-kumo-strong mt-1">
+          Insert random test data into <span className="font-medium text-kumo-default">{schema.name}</span>
+        </Dialog.Description>
 
-        <div className="space-y-4 py-4">
+        <div className="space-y-4 py-4 mt-4">
           {/* Row count input */}
           <div className="space-y-2">
             <Label htmlFor="row-count">Number of rows to generate</Label>
@@ -87,7 +75,7 @@ export function DummyDataGeneratorDialog({
                 disabled={isGenerating}
                 className="w-24"
               />
-              <span className="text-sm text-muted-foreground">(max 100)</span>
+              <span className="text-sm text-kumo-strong">(max 100)</span>
             </div>
           </div>
 
@@ -99,20 +87,20 @@ export function DummyDataGeneratorDialog({
                 {schema.columns.map((col) => (
                   <div
                     key={col.name}
-                    className="flex items-center justify-between text-sm py-1.5 border-b border-border last:border-0"
+                    className="flex items-center justify-between text-sm py-1.5 border-b border-kumo-line last:border-0"
                   >
                     <div className="flex items-center gap-2">
                       <span className={cn(
                         "font-mono",
-                        col.pk > 0 && "text-primary font-medium"
+                        col.pk > 0 && "text-kumo-brand font-medium"
                       )}>
                         {col.name}
                       </span>
-                      <span className="text-[10px] text-muted-foreground uppercase">
+                      <span className="text-[10px] text-kumo-strong uppercase">
                         {col.type}
                       </span>
                     </div>
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-xs text-kumo-strong">
                       {getColumnGeneratorDescription(col, schema.foreignKeys)}
                     </span>
                   </div>
@@ -126,13 +114,13 @@ export function DummyDataGeneratorDialog({
             <div className="space-y-2">
               <div className="flex items-center justify-between text-sm">
                 <span>Inserting rows...</span>
-                <span className="text-muted-foreground">
+                <span className="text-kumo-strong">
                   {progress} / {rowCount}
                 </span>
               </div>
-              <div className="h-2 bg-muted rounded-full overflow-hidden">
+              <div className="h-2 bg-kumo-fill rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-primary transition-all duration-200"
+                  className="h-full bg-kumo-brand transition-all duration-200"
                   style={{ width: `${(progress / rowCount) * 100}%` }}
                 />
               </div>
@@ -140,15 +128,10 @@ export function DummyDataGeneratorDialog({
           )}
         </div>
 
-        <DialogFooter>
+        <div className="flex justify-end gap-2 mt-4 pt-4 border-t border-kumo-line">
+          <Dialog.Close render={(props) => <Button variant="secondary" {...props}>Cancel</Button>} />
           <Button
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            disabled={isGenerating}
-          >
-            Cancel
-          </Button>
-          <Button
+            variant="primary"
             onClick={handleGenerate}
             disabled={isGenerating || rowCount < 1}
           >
@@ -156,13 +139,13 @@ export function DummyDataGeneratorDialog({
               <>Generating...</>
             ) : (
               <>
-                <HugeiconsIcon icon={SparklesIcon} className="size-4 mr-1.5" />
+                <SparkleIcon size={16} className="mr-1.5" />
                 Generate {rowCount} Row{rowCount !== 1 ? 's' : ''}
               </>
             )}
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </div>
+      </Dialog>
+    </Dialog.Root>
   )
 }

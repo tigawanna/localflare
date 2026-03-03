@@ -1,7 +1,6 @@
 import * as React from "react"
-import { HugeiconsIcon } from "@hugeicons/react"
-import { Search01Icon, Cancel01Icon } from "@hugeicons/core-free-icons"
-import { cn } from "@/lib/utils"
+import { MagnifyingGlassIcon, XIcon } from "@phosphor-icons/react"
+import { cn } from "@cloudflare/kumo"
 
 interface SearchInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "onChange"> {
   value: string
@@ -44,10 +43,9 @@ export function SearchInput({
 
   return (
     <div className={cn("relative", className)}>
-      <HugeiconsIcon
-        icon={Search01Icon}
-        className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none"
-        strokeWidth={2}
+      <MagnifyingGlassIcon
+        size={16}
+        className="absolute left-3 top-1/2 -translate-y-1/2 text-kumo-strong pointer-events-none"
       />
       <input
         ref={inputRef}
@@ -56,9 +54,9 @@ export function SearchInput({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         className={cn(
-          "w-full h-9 pl-9 pr-9 text-sm bg-background border border-input rounded-md",
-          "placeholder:text-muted-foreground",
-          "focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent",
+          "w-full h-9 pl-9 pr-9 text-sm bg-kumo-base border border-kumo-line rounded-md",
+          "placeholder:text-kumo-subtle",
+          "focus:outline-none focus:ring-2 focus:ring-kumo-ring focus:border-transparent",
           "transition-colors"
         )}
         {...props}
@@ -67,12 +65,12 @@ export function SearchInput({
         <button
           type="button"
           onClick={handleClear}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-kumo-strong hover:text-kumo-default transition-colors"
         >
-          <HugeiconsIcon icon={Cancel01Icon} className="size-4" strokeWidth={2} />
+          <XIcon size={16} />
         </button>
       ) : showShortcut ? (
-        <kbd className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground font-mono bg-muted px-1.5 py-0.5 rounded border border-border">
+        <kbd className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-kumo-strong font-mono bg-kumo-fill px-1.5 py-0.5 rounded border border-kumo-line">
           {navigator.platform.includes("Mac") ? "⌘K" : "Ctrl+K"}
         </kbd>
       ) : null}

@@ -6,21 +6,11 @@
  */
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { HugeiconsIcon } from '@hugeicons/react'
-import { Add01Icon, Edit02Icon, Key01Icon } from '@hugeicons/core-free-icons'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
-import { Button } from '@/components/ui/button'
+import { PlusIcon, PencilSimpleIcon, KeyIcon } from '@phosphor-icons/react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { cn } from '@/lib/utils'
+import { Button, Dialog, cn } from '@cloudflare/kumo'
 import type { D1Row, D1CellValue, D1TableSchema, D1Column } from './types'
 
 // ============================================================================
@@ -123,17 +113,17 @@ function FormField({
           htmlFor={column.name}
           className={cn(
             "text-xs font-medium flex items-center gap-1.5",
-            isPrimaryKey && "text-primary"
+            isPrimaryKey && "text-kumo-brand"
           )}
         >
           {isPrimaryKey && (
-            <HugeiconsIcon icon={Key01Icon} className="size-3" strokeWidth={2} />
+            <KeyIcon size={12} />
           )}
           {column.name}
-          {isRequired && <span className="text-destructive">*</span>}
+          {isRequired && <span className="text-kumo-danger">*</span>}
         </Label>
         <div className="flex items-center gap-2">
-          <span className="text-[10px] text-muted-foreground uppercase">
+          <span className="text-[10px] text-kumo-strong uppercase">
             {column.type}
           </span>
           {!isRequired && (
@@ -144,8 +134,8 @@ function FormField({
                 "text-[10px] px-1.5 py-0.5 rounded",
                 "transition-colors",
                 value === null
-                  ? "bg-amber-500/20 text-amber-500"
-                  : "bg-muted text-muted-foreground hover:bg-muted/80"
+                  ? "bg-yellow-500/20 text-yellow-500"
+                  : "bg-kumo-fill text-kumo-strong hover:bg-kumo-fill"
               )}
             >
               NULL
@@ -162,9 +152,9 @@ function FormField({
             checked={!!value}
             onChange={handleChange}
             disabled={inputDisabled}
-            className="rounded border-border"
+            className="rounded border-kumo-line"
           />
-          <span className="text-xs text-muted-foreground">
+          <span className="text-xs text-kumo-strong">
             {value ? 'true (1)' : 'false (0)'}
           </span>
         </div>
@@ -177,13 +167,13 @@ function FormField({
           placeholder={value === null ? 'NULL' : isAutoIncrement ? 'Auto-generated' : ''}
           rows={2}
           className={cn(
-            "w-full px-3 py-2 rounded-md border border-input bg-background",
+            "w-full px-3 py-2 rounded-md border border-kumo-line bg-kumo-base",
             "text-sm font-mono",
-            "placeholder:text-muted-foreground/50",
-            "focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent",
+            "placeholder:text-kumo-subtle",
+            "focus:outline-none focus:ring-2 focus:ring-kumo-ring focus:border-transparent",
             "disabled:opacity-50 disabled:cursor-not-allowed",
-            value === null && "italic text-muted-foreground",
-            error && "border-destructive focus:ring-destructive"
+            value === null && "italic text-kumo-strong",
+            error && "border-kumo-danger focus:ring-kumo-danger"
           )}
         />
       ) : (
@@ -197,17 +187,17 @@ function FormField({
           className={cn(
             "font-mono text-sm",
             value === null && "italic",
-            error && "border-destructive focus:ring-destructive"
+            error && "border-kumo-danger focus:ring-kumo-danger"
           )}
         />
       )}
-      
+
       {error && (
-        <p className="text-xs text-destructive">{error}</p>
+        <p className="text-xs text-kumo-danger">{error}</p>
       )}
       
       {column.dflt_value !== null && (
-        <p className="text-[10px] text-muted-foreground">
+        <p className="text-[10px] text-kumo-strong">
           Default: {String(column.dflt_value)}
         </p>
       )}
@@ -390,31 +380,25 @@ export function RowEditorDialog({
   }, [validate, formData, schema, isEditing, onSave, isSqlExpression])
   
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg max-h-[80vh] flex flex-col overflow-hidden">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <HugeiconsIcon 
-              icon={isEditing ? Edit02Icon : Add01Icon} 
-              className="size-5" 
-              strokeWidth={2} 
-            />
-            {isEditing ? 'Edit Row' : 'Add Row'}
-          </DialogTitle>
-          <DialogDescription>
-            {isEditing 
-              ? `Editing row in ${schema.name}` 
-              : `Add a new row to ${schema.name}`
-            }
-          </DialogDescription>
-        </DialogHeader>
-        
-        <ScrollArea className="flex-1 min-h-0 -mx-6 px-6 overflow-y-auto">
+    <Dialog.Root open={open} onOpenChange={onOpenChange}>
+      <Dialog size="lg" className="p-6 max-h-[80vh] flex flex-col overflow-hidden">
+        <Dialog.Title className="text-lg font-semibold text-kumo-default flex items-center gap-2">
+          {isEditing ? <PencilSimpleIcon size={20} /> : <PlusIcon size={20} />}
+          {isEditing ? 'Edit Row' : 'Add Row'}
+        </Dialog.Title>
+        <Dialog.Description className="text-sm text-kumo-strong mt-1">
+          {isEditing
+            ? `Editing row in ${schema.name}`
+            : `Add a new row to ${schema.name}`
+          }
+        </Dialog.Description>
+
+        <ScrollArea className="flex-1 min-h-0 -mx-6 px-6 overflow-y-auto mt-4">
           <div className="space-y-4 py-4 pr-2">
             {schema.columns.map(col => {
               const isPK = schema.primaryKeys.includes(col.name)
               const isAutoIncrement = isPK && col.type.toUpperCase() === 'INTEGER'
-              
+
               return (
                 <FormField
                   key={col.name}
@@ -430,24 +414,19 @@ export function RowEditorDialog({
             })}
           </div>
         </ScrollArea>
-        
-        <DialogFooter>
+
+        <div className="flex justify-end gap-2 mt-4 pt-4 border-t border-kumo-line">
+          <Dialog.Close render={(props) => <Button variant="secondary" {...props}>Cancel</Button>} />
           <Button
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            disabled={isSaving}
-          >
-            Cancel
-          </Button>
-          <Button
+            variant="primary"
             onClick={handleSave}
             disabled={isSaving}
           >
             {isSaving ? 'Saving...' : isEditing ? 'Save Changes' : 'Add Row'}
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </div>
+      </Dialog>
+    </Dialog.Root>
   )
 }
 

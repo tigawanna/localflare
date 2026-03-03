@@ -26,23 +26,21 @@ import {
   type VisibilityState,
   type ColumnSizingState,
 } from '@tanstack/react-table'
-import { HugeiconsIcon } from '@hugeicons/react'
 import {
-  ArrowUp01Icon,
-  ArrowDown01Icon,
-  ArrowUpDownIcon,
-  Delete02Icon,
-  Edit02Icon,
-  Copy01Icon,
-  Tick01Icon,
-  Search01Icon,
-  FilterIcon,
-  ViewIcon,
-  Cancel01Icon,
+  ArrowUpIcon,
+  ArrowDownIcon,
+  ArrowsDownUpIcon,
+  TrashIcon,
+  PencilSimpleIcon,
+  CopyIcon,
+  CheckIcon,
+  MagnifyingGlassIcon,
+  FunnelIcon,
+  EyeIcon,
+  XIcon,
   DatabaseIcon,
-  SparklesIcon,
-} from '@hugeicons/core-free-icons'
-import { Button } from '@/components/ui/button'
+  SparkleIcon,
+} from '@phosphor-icons/react'
 import { Input } from '@/components/ui/input'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import {
@@ -55,7 +53,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
-import { cn } from '@/lib/utils'
+import { Button, cn } from '@cloudflare/kumo'
 import { EditableCell } from './EditableCell'
 import type { D1Row, D1CellValue, D1TableSchema, PaginationState, FilterOperator } from './types'
 
@@ -167,24 +165,24 @@ function ColumnFilterPopover({ columnId, columnName, filter, onFilterChange }: C
       <PopoverTrigger asChild>
         <button
           className={cn(
-            "p-0.5 rounded hover:bg-accent transition-colors",
-            filter && "text-primary"
+            "p-0.5 rounded hover:bg-kumo-tint transition-colors",
+            filter && "text-kumo-brand"
           )}
           title={filter ? `Filtered: ${filter.operator} ${filter.value}` : 'Filter column'}
         >
-          <HugeiconsIcon icon={FilterIcon} className="size-3" />
+          <FunnelIcon size={12} />
         </button>
       </PopoverTrigger>
       <PopoverContent className="w-64 p-3" align="start">
         <div className="space-y-3">
-          <div className="text-xs font-medium text-muted-foreground">
+          <div className="text-xs font-medium text-kumo-strong">
             Filter: {columnName}
           </div>
 
           <select
             value={operator}
             onChange={(e) => setOperator(e.target.value as FilterOperator)}
-            className="w-full h-8 px-2 text-xs border border-border rounded bg-background focus:outline-none focus:ring-1 focus:ring-ring"
+            className="w-full h-8 px-2 text-xs border border-kumo-line rounded bg-kumo-base focus:outline-none focus:ring-1 focus:ring-kumo-ring"
           >
             {FILTER_OPERATORS.map(op => (
               <option key={op.value} value={op.value}>{op.label}</option>
@@ -202,10 +200,10 @@ function ColumnFilterPopover({ columnId, columnName, filter, onFilterChange }: C
           )}
 
           <div className="flex gap-2">
-            <Button size="sm" className="flex-1 h-7 text-xs" onClick={handleApply}>
+            <Button variant="primary" size="sm" className="flex-1 text-xs" onClick={handleApply}>
               Apply
             </Button>
-            <Button size="sm" variant="outline" className="h-7 text-xs" onClick={handleClear}>
+            <Button size="sm" variant="secondary" className="text-xs" onClick={handleClear}>
               Clear
             </Button>
           </div>
@@ -235,8 +233,8 @@ function PaginationControls({
   const endRow = Math.min((pageIndex + 1) * pageSize, totalRows)
 
   return (
-    <div className="flex items-center justify-between px-4 py-3 border-t border-border bg-muted/30">
-      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+    <div className="flex items-center justify-between px-4 py-3 border-t border-kumo-line bg-kumo-tint/30">
+      <div className="flex items-center gap-2 text-xs text-kumo-strong">
         <span>
           {totalRows > 0 ? (
             <>Showing {startRow}-{endRow} of {totalRows} rows</>
@@ -244,11 +242,11 @@ function PaginationControls({
             'No rows'
           )}
         </span>
-        <span className="text-border">|</span>
+        <span className="text-kumo-line">|</span>
         <select
           value={pageSize}
           onChange={(e) => onPageSizeChange(Number(e.target.value))}
-          className="bg-transparent border border-border rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-ring"
+          className="bg-transparent border border-kumo-line rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-kumo-ring"
         >
           {[25, 50, 100, 250].map(size => (
             <option key={size} value={size}>{size} per page</option>
@@ -258,41 +256,41 @@ function PaginationControls({
 
       <div className="flex items-center gap-1">
         <Button
-          variant="outline"
+          variant="secondary"
           size="sm"
           onClick={() => onPageChange(0)}
           disabled={pageIndex === 0}
-          className="h-7 px-2 text-xs"
+          className="px-2 text-xs"
         >
           First
         </Button>
         <Button
-          variant="outline"
+          variant="secondary"
           size="sm"
           onClick={() => onPageChange(pageIndex - 1)}
           disabled={pageIndex === 0}
-          className="h-7 px-2 text-xs"
+          className="px-2 text-xs"
         >
           Prev
         </Button>
-        <span className="px-3 text-xs text-muted-foreground">
+        <span className="px-3 text-xs text-kumo-strong">
           Page {pageIndex + 1} of {totalPages || 1}
         </span>
         <Button
-          variant="outline"
+          variant="secondary"
           size="sm"
           onClick={() => onPageChange(pageIndex + 1)}
           disabled={pageIndex >= totalPages - 1}
-          className="h-7 px-2 text-xs"
+          className="px-2 text-xs"
         >
           Next
         </Button>
         <Button
-          variant="outline"
+          variant="secondary"
           size="sm"
           onClick={() => onPageChange(totalPages - 1)}
           disabled={pageIndex >= totalPages - 1}
-          className="h-7 px-2 text-xs"
+          className="px-2 text-xs"
         >
           Last
         </Button>
@@ -325,36 +323,37 @@ function RowActions({ row, onEdit, onDelete }: RowActionsProps) {
       {onEdit && (
         <Button
           variant="ghost"
-          size="icon"
-          className="h-6 w-6"
+          shape="square"
+          size="xs"
           onClick={onEdit}
-          title="Edit row"
+          aria-label="Edit row"
         >
-          <HugeiconsIcon icon={Edit02Icon} className="size-3.5" strokeWidth={2} />
+          <PencilSimpleIcon size={14} />
         </Button>
       )}
       <Button
         variant="ghost"
-        size="icon"
-        className="h-6 w-6"
+        shape="square"
+        size="xs"
         onClick={handleCopy}
-        title="Copy as JSON"
+        aria-label="Copy as JSON"
       >
-        <HugeiconsIcon
-          icon={copied ? Tick01Icon : Copy01Icon}
-          className={cn("size-3.5", copied && "text-green-500")}
-          strokeWidth={2}
-        />
+        {copied ? (
+          <CheckIcon size={14} className="text-green-500" />
+        ) : (
+          <CopyIcon size={14} />
+        )}
       </Button>
       {onDelete && (
         <Button
           variant="ghost"
-          size="icon"
-          className="h-6 w-6 hover:text-destructive"
+          shape="square"
+          size="xs"
+          className="hover:text-kumo-danger"
           onClick={onDelete}
-          title="Delete row"
+          aria-label="Delete row"
         >
-          <HugeiconsIcon icon={Delete02Icon} className="size-3.5" strokeWidth={2} />
+          <TrashIcon size={14} />
         </Button>
       )}
     </div>
@@ -493,7 +492,7 @@ export function EditableDataTable({
             type="checkbox"
             checked={table.getIsAllRowsSelected()}
             onChange={table.getToggleAllRowsSelectedHandler()}
-            className="rounded border-border"
+            className="rounded border-kumo-line"
           />
         ),
         cell: ({ row }) => (
@@ -501,7 +500,7 @@ export function EditableDataTable({
             type="checkbox"
             checked={row.getIsSelected()}
             onChange={row.getToggleSelectedHandler()}
-            className="rounded border-border"
+            className="rounded border-kumo-line"
           />
         ),
         size: 40,
@@ -525,26 +524,26 @@ export function EditableDataTable({
           return (
             <div className="flex items-center gap-1.5">
               <button
-                className="flex items-center gap-1 hover:text-foreground transition-colors group/sort"
+                className="flex items-center gap-1 hover:text-kumo-default transition-colors group/sort"
                 onClick={() => column.toggleSorting()}
                 title={sorted ? `Sorted ${sorted}ending` : 'Click to sort'}
               >
-                <span className={cn(isPK && 'text-primary')}>{col.name}</span>
-                {isPK && <span className="text-[9px] text-primary/60 ml-0.5">PK</span>}
-                <span className="text-[9px] text-muted-foreground/60 ml-1">
+                <span className={cn(isPK && 'text-kumo-brand')}>{col.name}</span>
+                {isPK && <span className="text-[9px] text-kumo-brand/60 ml-0.5">PK</span>}
+                <span className="text-[9px] text-kumo-inactive ml-1">
                   {col.type.toUpperCase()}
                 </span>
                 {/* Sort indicator - always visible */}
                 <span className={cn(
                   "inline-flex items-center justify-center size-4 rounded transition-colors",
-                  sorted ? "text-primary bg-primary/10" : "text-muted-foreground/40 group-hover/sort:text-muted-foreground group-hover/sort:bg-muted"
+                  sorted ? "text-kumo-brand bg-kumo-brand/10" : "text-kumo-inactive group-hover/sort:text-kumo-strong group-hover/sort:bg-kumo-tint"
                 )}>
                   {sorted === 'asc' ? (
-                    <HugeiconsIcon icon={ArrowUp01Icon} className="size-3" />
+                    <ArrowUpIcon size={12} />
                   ) : sorted === 'desc' ? (
-                    <HugeiconsIcon icon={ArrowDown01Icon} className="size-3" />
+                    <ArrowDownIcon size={12} />
                   ) : (
-                    <HugeiconsIcon icon={ArrowUpDownIcon} className="size-3" />
+                    <ArrowsDownUpIcon size={12} />
                   )}
                 </span>
               </button>
@@ -653,15 +652,15 @@ export function EditableDataTable({
   // Loading skeleton
   if (isLoading) {
     return (
-      <div className={cn("border border-border rounded-lg overflow-hidden", className)}>
+      <div className={cn("border border-kumo-line rounded-lg overflow-hidden", className)}>
         <div className="animate-pulse">
-          <div className="h-12 bg-muted/50 border-b border-border" />
-          <div className="h-10 bg-muted/50 border-b border-border" />
+          <div className="h-12 bg-kumo-tint/50 border-b border-kumo-line" />
+          <div className="h-10 bg-kumo-tint/50 border-b border-kumo-line" />
           {[...Array(5)].map((_, i) => (
-            <div key={i} className="h-10 border-b border-border flex">
+            <div key={i} className="h-10 border-b border-kumo-line flex">
               {[...Array(schema.columns.length + 2)].map((_, j) => (
                 <div key={j} className="flex-1 p-3">
-                  <div className="h-4 bg-muted rounded" />
+                  <div className="h-4 bg-kumo-fill rounded" />
                 </div>
               ))}
             </div>
@@ -676,14 +675,14 @@ export function EditableDataTable({
   const hasFilters = columnFilters.length > 0 || globalFilter.length > 0
 
   return (
-    <div className={cn("border border-border rounded-lg overflow-hidden flex flex-col", className)}>
+    <div className={cn("border border-kumo-line rounded-lg overflow-hidden flex flex-col", className)}>
       {/* Toolbar */}
-      <div className="px-4 py-2 border-b border-border bg-muted/30 flex items-center gap-3 flex-wrap">
+      <div className="px-4 py-2 border-b border-kumo-line bg-kumo-tint/30 flex items-center gap-3 flex-wrap">
         {/* Search */}
         <div className="relative flex-1 min-w-[200px] max-w-[300px]">
-          <HugeiconsIcon
-            icon={Search01Icon}
-            className="size-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground"
+          <MagnifyingGlassIcon
+            size={16}
+            className="absolute left-2.5 top-1/2 -translate-y-1/2 text-kumo-strong"
           />
           <Input
             placeholder="Search all columns..."
@@ -696,8 +695,8 @@ export function EditableDataTable({
         {/* Column Visibility */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5">
-              <HugeiconsIcon icon={ViewIcon} className="size-3.5" />
+            <Button variant="secondary" size="sm" className="text-xs gap-1.5">
+              <EyeIcon size={14} />
               Columns
             </Button>
           </DropdownMenuTrigger>
@@ -723,12 +722,12 @@ export function EditableDataTable({
         {/* Generate Data Button */}
         {onGenerateData && (
           <Button
-            variant="outline"
+            variant="secondary"
             size="sm"
-            className="h-8 text-xs gap-1.5"
+            className="text-xs gap-1.5"
             onClick={onGenerateData}
           >
-            <HugeiconsIcon icon={SparklesIcon} className="size-3.5" />
+            <SparkleIcon size={14} />
             Generate Data
           </Button>
         )}
@@ -736,14 +735,14 @@ export function EditableDataTable({
         {/* Filter count badge */}
         {hasFilters && (
           <Button
-            variant="outline"
+            variant="secondary"
             size="sm"
-            className="h-8 text-xs gap-1.5"
+            className="text-xs gap-1.5"
             onClick={clearAllFilters}
           >
-            <HugeiconsIcon icon={FilterIcon} className="size-3.5" />
+            <FunnelIcon size={14} />
             Filters ({columnFilters.length + (globalFilter ? 1 : 0)})
-            <HugeiconsIcon icon={Cancel01Icon} className="size-3" />
+            <XIcon size={12} />
           </Button>
         )}
 
@@ -757,11 +756,11 @@ export function EditableDataTable({
             />
             <Label
               htmlFor="server-sort"
-              className="text-xs text-muted-foreground cursor-pointer"
+              className="text-xs text-kumo-strong cursor-pointer"
               title="When enabled, sorting queries the database with ORDER BY to sort across all pages. When disabled, only the current page is sorted."
             >
               <span className="flex items-center gap-1">
-                <HugeiconsIcon icon={DatabaseIcon} className="size-3" />
+                <DatabaseIcon size={12} />
                 <span>Sort via DB</span>
                 <span className="text-[10px] opacity-60">(ORDER BY)</span>
               </span>
@@ -772,27 +771,27 @@ export function EditableDataTable({
 
       {/* Bulk actions toolbar */}
       {selectedCount > 0 && (
-        <div className="px-4 py-2 bg-primary/10 border-b border-border flex items-center gap-3">
+        <div className="px-4 py-2 bg-kumo-brand/10 border-b border-kumo-line flex items-center gap-3">
           <span className="text-xs font-medium">
             {selectedCount} row{selectedCount !== 1 ? 's' : ''} selected
           </span>
           <Button
             variant="ghost"
             size="sm"
-            className="h-7 text-xs text-destructive hover:text-destructive"
+            className="text-xs text-kumo-danger hover:text-kumo-danger"
             onClick={() => {
               const selectedRows = table.getSelectedRowModel().rows
               selectedRows.forEach(row => onRowDelete?.(row.original))
               setRowSelection({})
             }}
           >
-            <HugeiconsIcon icon={Delete02Icon} className="size-3.5 mr-1" strokeWidth={2} />
+            <TrashIcon size={14} className="mr-1" />
             Delete Selected
           </Button>
           <Button
             variant="ghost"
             size="sm"
-            className="h-7 text-xs"
+            className="text-xs"
             onClick={() => setRowSelection({})}
           >
             Clear Selection
@@ -803,14 +802,14 @@ export function EditableDataTable({
       {/* Table */}
       <div className="flex-1 overflow-auto">
         <table className="w-full text-sm" style={{ minWidth: table.getCenterTotalSize() }}>
-          <thead className="bg-muted/50 sticky top-0 z-10">
+          <thead className="bg-kumo-tint/50 sticky top-0 z-10">
             {table.getHeaderGroups().map(headerGroup => (
-              <tr key={headerGroup.id} className="border-b border-border">
+              <tr key={headerGroup.id} className="border-b border-kumo-line">
                 {headerGroup.headers.map(header => (
                   <th
                     key={header.id}
                     className={cn(
-                      "px-4 py-2.5 text-left text-xs font-medium text-muted-foreground whitespace-nowrap relative overflow-hidden",
+                      "px-4 py-2.5 text-left text-xs font-medium text-kumo-strong whitespace-nowrap relative overflow-hidden",
                       header.column.id === 'select' && 'w-10',
                       header.column.id === 'actions' && 'w-24',
                     )}
@@ -841,8 +840,8 @@ export function EditableDataTable({
                         <div className={cn(
                           "w-0.5 h-full",
                           header.column.getIsResizing()
-                            ? "bg-primary"
-                            : "bg-border hover:bg-primary"
+                            ? "bg-kumo-brand"
+                            : "bg-kumo-line hover:bg-kumo-brand"
                         )} />
                       </div>
                     )}
@@ -851,12 +850,12 @@ export function EditableDataTable({
               </tr>
             ))}
           </thead>
-          <tbody className="bg-card divide-y divide-border">
+          <tbody className="bg-kumo-base divide-y divide-kumo-line">
             {table.getRowModel().rows.length === 0 ? (
               <tr>
                 <td
                   colSpan={columns.length}
-                  className="px-4 py-12 text-center text-muted-foreground"
+                  className="px-4 py-12 text-center text-kumo-strong"
                 >
                   {hasFilters ? 'No matching data' : 'No data in this table'}
                 </td>
@@ -866,8 +865,8 @@ export function EditableDataTable({
                 <tr
                   key={row.id}
                   className={cn(
-                    "group transition-colors hover:bg-muted/30",
-                    row.getIsSelected() && "bg-primary/5"
+                    "group transition-colors hover:bg-kumo-tint/30",
+                    row.getIsSelected() && "bg-kumo-brand/5"
                   )}
                 >
                   {row.getVisibleCells().map(cell => (

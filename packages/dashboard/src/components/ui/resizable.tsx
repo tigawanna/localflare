@@ -1,7 +1,7 @@
-import { GripVertical } from "lucide-react"
+import { DotsSixVertical as DotsSixVerticalIcon } from "@phosphor-icons/react"
 import { Group, Panel, Separator } from "react-resizable-panels"
 
-import { cn } from "@/lib/utils"
+import { cn } from "@cloudflare/kumo"
 
 type ResizablePanelGroupProps = React.ComponentProps<typeof Group> & {
   direction?: "horizontal" | "vertical"
@@ -41,7 +41,7 @@ const ResizableHandle = ({
   >
     {withHandle && (
       <div className="z-10 flex h-4 w-3 items-center justify-center rounded-sm border bg-border">
-        <GripVertical className="h-2.5 w-2.5" />
+        <DotsSixVerticalIcon size={10} />
       </div>
     )}
   </Separator>
