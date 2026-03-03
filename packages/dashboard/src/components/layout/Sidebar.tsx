@@ -1,308 +1,265 @@
 import { useState, useEffect } from "react"
-import { NavLink, Link } from "react-router-dom"
+import { NavLink } from "react-router-dom"
 import { useQuery } from "@tanstack/react-query"
-import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react"
 import {
-  Database02Icon,
+  DatabaseIcon,
   HardDriveIcon,
-  Folder01Icon,
-  Layers01Icon,
-  TaskDone01Icon,
-  ArrowLeft01Icon,
-  ArrowRight01Icon,
-  Home01Icon,
-  CommandLineIcon,
-  GlobalIcon,
-  DashboardSpeed01Icon,
-} from "@hugeicons/core-free-icons"
+  FolderIcon,
+  StackIcon,
+  QueueIcon,
+  GlobeIcon,
+  TerminalIcon,
+  ChartBarIcon,
+  CaretLeftIcon,
+  CaretRightIcon,
+  HouseIcon,
+  SunIcon,
+  MoonIcon,
+  CaretDownIcon,
+  type Icon,
+} from "@phosphor-icons/react"
+import { Surface, Tooltip, Button, cn } from "@cloudflare/kumo"
 import { bindingsApi } from "@/lib/api"
-import { cn } from "@/lib/utils"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { Button } from "@/components/ui/button"
+import { useTheme } from "@/components/layout/ThemeProvider"
+
+type ConnectionStatus = "connected" | "connecting" | "disconnected"
 
 interface NavItem {
-  icon: IconSvgElement
+  icon: Icon
   label: string
   path: string
-  colorClass: string
 }
 
 interface NavGroup {
   title: string
   items: NavItem[]
+  defaultOpen?: boolean
 }
 
 const navGroups: NavGroup[] = [
   {
     title: "Storage",
+    defaultOpen: true,
     items: [
-      {
-        icon: Database02Icon,
-        label: "D1 Databases",
-        path: "/d1",
-        colorClass: "text-d1",
-      },
-      {
-        icon: HardDriveIcon,
-        label: "KV Namespaces",
-        path: "/kv",
-        colorClass: "text-kv",
-      },
-      {
-        icon: Folder01Icon,
-        label: "R2 Buckets",
-        path: "/r2",
-        colorClass: "text-r2",
-      },
+      { icon: DatabaseIcon, label: "D1 Databases", path: "/d1" },
+      { icon: HardDriveIcon, label: "KV Namespaces", path: "/kv" },
+      { icon: FolderIcon, label: "R2 Buckets", path: "/r2" },
     ],
   },
   {
     title: "Compute",
+    defaultOpen: true,
     items: [
-      {
-        icon: Layers01Icon,
-        label: "Durable Objects",
-        path: "/do",
-        colorClass: "text-do",
-      },
-      {
-        icon: TaskDone01Icon,
-        label: "Queues",
-        path: "/queues",
-        colorClass: "text-queues",
-      },
+      { icon: StackIcon, label: "Durable Objects", path: "/do" },
+      { icon: QueueIcon, label: "Queues", path: "/queues" },
     ],
   },
   {
     title: "Monitoring",
+    defaultOpen: true,
     items: [
-      {
-        icon: GlobalIcon,
-        label: "Network",
-        path: "/network",
-        colorClass: "text-blue-500",
-      },
-      {
-        icon: CommandLineIcon,
-        label: "Tail Logs",
-        path: "/logs",
-        colorClass: "text-green-500",
-      },
+      { icon: GlobeIcon, label: "Network", path: "/network" },
+      { icon: TerminalIcon, label: "Tail Logs", path: "/logs" },
     ],
   },
 ]
 
-type ConnectionStatus = 'connected' | 'connecting' | 'disconnected'
-
 export function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false)
-  const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('connecting')
+  const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>("connecting")
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() =>
+    Object.fromEntries(navGroups.map((g) => [g.title, g.defaultOpen ?? true]))
+  )
+  const { mode, toggle } = useTheme()
 
   const { data: bindings, isError, isLoading } = useQuery({
     queryKey: ["bindings"],
     queryFn: bindingsApi.getAll,
-    refetchInterval: 5000, // Check connection every 5 seconds
+    refetchInterval: 5000,
     retry: 1,
   })
 
-  // Update connection status based on query state
   useEffect(() => {
-    if (isLoading) {
-      setConnectionStatus('connecting')
-    } else if (isError) {
-      setConnectionStatus('disconnected')
-    } else if (bindings) {
-      setConnectionStatus('connected')
-    }
+    if (isLoading) setConnectionStatus("connecting")
+    else if (isError) setConnectionStatus("disconnected")
+    else if (bindings) setConnectionStatus("connected")
   }, [isLoading, isError, bindings])
 
-  const getBindingCount = (path: string): number => {
-    if (!bindings) return 0
-    switch (path) {
-      case "/d1":
-        return bindings.bindings.d1.length
-      case "/kv":
-        return bindings.bindings.kv.length
-      case "/r2":
-        return bindings.bindings.r2.length
-      case "/do":
-        return bindings.bindings.durableObjects.length
-      case "/queues":
-        return bindings.bindings.queues.producers.length
-      default:
-        return 0
-    }
+  const toggleGroup = (title: string) => {
+    setOpenGroups((prev) => ({ ...prev, [title]: !prev[title] }))
   }
 
   return (
-    <aside
+    <Surface
+      as="aside"
+      data-sidebar-open={!isCollapsed}
       className={cn(
-        "flex flex-col border-r border-sidebar-border bg-sidebar transition-all duration-200",
-        isCollapsed ? "w-16" : "w-60"
+        "flex h-screen flex-col border-r border-kumo-line bg-kumo-base transition-all duration-200",
+        isCollapsed ? "w-14" : "w-56"
       )}
     >
       {/* Header */}
-      <div className="flex h-14 items-center justify-between border-b border-sidebar-border px-3">
+      <div className="flex h-12 items-center border-b border-kumo-line px-3">
         {!isCollapsed && (
-          <NavLink to="/" className="flex items-center gap-2.5 min-w-0">
+          <NavLink to="/" className="flex items-center gap-2 min-w-0">
             <svg
-              className="size-8 shrink-0"
+              className="size-6 shrink-0"
               viewBox="0 0 100 100"
               fill="none"
               xmlns="http://www.w3.org/2000/svg"
             >
-              <rect width="100" height="100" rx="20" className="fill-primary" />
+              <rect width="100" height="100" rx="20" className="fill-[#f6821f]" />
               <path d="M20 75 L20 45 L32 45 L32 75 Z" fill="white" />
               <path d="M38 75 L38 30 L50 30 L50 75 Z" fill="white" />
               <path d="M56 75 L56 55 L68 55 L68 75 Z" fill="white" />
               <path d="M74 75 L74 20 L86 20 L86 75 Z" fill="white" />
             </svg>
-            <div className="min-w-0">
-              <span className="text-sm font-semibold text-sidebar-foreground">
-                Localflare
-              </span>
-              {bindings?.name && (
-                <p className="text-xs text-muted-foreground truncate">
-                  {bindings.name}
-                </p>
-              )}
-            </div>
+            <span className="text-sm font-semibold text-kumo-default truncate">
+              {bindings?.name ?? "Localflare"}
+            </span>
           </NavLink>
         )}
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setIsCollapsed(!isCollapsed)}
-          className="size-8 shrink-0 text-muted-foreground hover:text-foreground"
-        >
-          <HugeiconsIcon
-            icon={isCollapsed ? ArrowRight01Icon : ArrowLeft01Icon}
-            size={16}
-            strokeWidth={2}
-          />
-        </Button>
+        <div className={cn("ml-auto", isCollapsed && "mx-auto")}>
+          <Button
+            variant="ghost"
+            shape="square"
+            size="xs"
+            aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            onClick={() => setIsCollapsed(!isCollapsed)}
+          >
+            {isCollapsed ? <CaretRightIcon size={14} /> : <CaretLeftIcon size={14} />}
+          </Button>
+        </div>
       </div>
 
       {/* Navigation */}
-      <ScrollArea className="flex-1">
-        <nav className="p-2">
-          {/* Home link */}
-          <NavLink
+      <nav className="flex-1 overflow-y-auto py-2">
+        {/* Home */}
+        <div className="px-2">
+          <SidebarLink
             to="/"
             end
-            className={({ isActive }) =>
-              cn(
-                "flex items-center gap-2.5 px-2.5 py-2 rounded-md text-[13px] font-medium transition-colors mb-2",
-                isCollapsed && "justify-center px-2",
-                isActive
-                  ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                  : "text-muted-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
-              )
-            }
-          >
-            <HugeiconsIcon icon={Home01Icon} className="size-4 shrink-0" strokeWidth={2} />
-            {!isCollapsed && <span>Overview</span>}
-          </NavLink>
+            icon={HouseIcon}
+            label="Overview"
+            isCollapsed={isCollapsed}
+          />
+        </div>
 
-          {/* Nav groups */}
-          {navGroups.map((group) => (
-            <div key={group.title} className="mt-4">
-              {!isCollapsed && (
-                <div className="px-2.5 mb-2">
-                  <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-                    {group.title}
-                  </span>
-                </div>
-              )}
-              <div className="space-y-0.5">
-                {group.items.map((item) => {
-                  const count = getBindingCount(item.path)
-                  return (
-                    <NavLink
-                      key={item.path}
-                      to={item.path}
-                      className={({ isActive }) =>
-                        cn(
-                          "flex items-center gap-2.5 px-2.5 py-2 rounded-md text-[13px] font-medium transition-colors",
-                          isCollapsed && "justify-center px-2",
-                          isActive
-                            ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                            : "text-muted-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
-                        )
-                      }
-                    >
-                      {({ isActive }) => (
-                        <>
-                          <HugeiconsIcon
-                            icon={item.icon}
-                            className={cn(
-                              "size-4 shrink-0",
-                              isActive ? item.colorClass : ""
-                            )}
-                            strokeWidth={2}
-                          />
-                          {!isCollapsed && (
-                            <>
-                              <span className="flex-1 truncate">{item.label}</span>
-                              {count > 0 && (
-                                <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded-md tabular-nums">
-                                  {count}
-                                </span>
-                              )}
-                            </>
-                          )}
-                        </>
-                      )}
-                    </NavLink>
-                  )
-                })}
+        {/* Groups */}
+        {navGroups.map((group) => (
+          <div key={group.title} className="mt-3">
+            {!isCollapsed && (
+              <button
+                onClick={() => toggleGroup(group.title)}
+                className="flex w-full items-center justify-between px-4 py-1 text-[11px] font-medium text-kumo-subtle uppercase tracking-wider hover:text-kumo-default transition-colors"
+              >
+                {group.title}
+                <CaretDownIcon
+                  size={10}
+                  className={cn(
+                    "transition-transform",
+                    !openGroups[group.title] && "-rotate-90"
+                  )}
+                />
+              </button>
+            )}
+            {(isCollapsed || openGroups[group.title]) && (
+              <div className="mt-0.5 px-2 space-y-px">
+                {group.items.map((item) => (
+                  <SidebarLink
+                    key={item.path}
+                    to={item.path}
+                    icon={item.icon}
+                    label={item.label}
+                    isCollapsed={isCollapsed}
+                  />
+                ))}
               </div>
-            </div>
-          ))}
-        </nav>
-      </ScrollArea>
+            )}
+          </div>
+        ))}
 
-      {/* Analytics Explorer */}
-      <div className="px-2 pb-2">
-        <Link
-          to="/analytics"
-          className={cn(
-            "flex items-center gap-2.5 px-2.5 py-2 rounded-md text-[13px] font-medium transition-colors",
-            isCollapsed && "justify-center px-2",
-            "text-muted-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
-          )}
-        >
-          <HugeiconsIcon icon={DashboardSpeed01Icon} className="size-4 shrink-0 text-orange-500" strokeWidth={2} />
-          {!isCollapsed && <span>Analytics Explorer</span>}
-        </Link>
-      </div>
+        {/* Analytics */}
+        <div className="mt-3 px-2">
+          <SidebarLink
+            to="/analytics"
+            icon={ChartBarIcon}
+            label="Analytics Explorer"
+            isCollapsed={isCollapsed}
+          />
+        </div>
+      </nav>
 
       {/* Footer */}
-      <div className="p-3 border-t border-sidebar-border">
-        <div className={cn("flex items-center gap-2", isCollapsed ? "justify-center" : "px-2.5")}>
+      <div className="border-t border-kumo-line p-2">
+        <div className={cn("flex items-center gap-2", isCollapsed ? "justify-center" : "px-2")}>
           <span
             className={cn(
-              "size-2 rounded-full shrink-0",
-              connectionStatus === 'connected' && "bg-green-500",
-              connectionStatus === 'connecting' && "bg-yellow-500 animate-pulse",
-              connectionStatus === 'disconnected' && "bg-red-500"
+              "size-1.5 rounded-full shrink-0",
+              connectionStatus === "connected" && "bg-green-500",
+              connectionStatus === "connecting" && "bg-yellow-500 animate-pulse",
+              connectionStatus === "disconnected" && "bg-red-500"
             )}
           />
           {!isCollapsed && (
-            <div className="min-w-0">
-              <p className="text-[10px] text-muted-foreground truncate">
-                {connectionStatus === 'connected' && "Connected"}
-                {connectionStatus === 'connecting' && "Connecting..."}
-                {connectionStatus === 'disconnected' && "Disconnected"}
-              </p>
-              <p className="text-[10px] text-muted-foreground/60 truncate">
-                {connectionStatus === 'connected' && `Port ${new URLSearchParams(window.location.search).get('port') || '8787'}`}
-                {connectionStatus === 'disconnected' && "Check if wrangler is running"}
-              </p>
-            </div>
+            <span className="flex-1 text-[11px] text-kumo-subtle truncate">
+              {connectionStatus === "connected" && `Port ${new URLSearchParams(window.location.search).get("port") || "8787"}`}
+              {connectionStatus === "connecting" && "Connecting..."}
+              {connectionStatus === "disconnected" && "Disconnected"}
+            </span>
           )}
+          <Tooltip content={mode === "light" ? "Dark mode" : "Light mode"} side="right">
+            <Button
+              variant="ghost"
+              shape="square"
+              size="xs"
+              aria-label={mode === "light" ? "Switch to dark mode" : "Switch to light mode"}
+              onClick={toggle}
+            >
+              {mode === "light" ? <MoonIcon size={14} /> : <SunIcon size={14} />}
+            </Button>
+          </Tooltip>
         </div>
       </div>
-    </aside>
+    </Surface>
   )
+}
+
+interface SidebarLinkProps {
+  to: string
+  end?: boolean
+  icon: Icon
+  label: string
+  isCollapsed: boolean
+}
+
+function SidebarLink({ to, end, icon: IconComponent, label, isCollapsed }: SidebarLinkProps) {
+  const link = (
+    <NavLink
+      to={to}
+      end={end}
+      className={({ isActive }) =>
+        cn(
+          "flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-[13px] transition-colors",
+          isCollapsed && "justify-center px-2",
+          isActive
+            ? "bg-kumo-tint text-kumo-default font-medium"
+            : "text-kumo-strong hover:bg-kumo-tint/60 hover:text-kumo-default"
+        )
+      }
+    >
+      <IconComponent size={16} className="shrink-0" />
+      {!isCollapsed && <span className="truncate">{label}</span>}
+    </NavLink>
+  )
+
+  if (isCollapsed) {
+    return (
+      <Tooltip content={label} side="right">
+        {link}
+      </Tooltip>
+    )
+  }
+
+  return link
 }
