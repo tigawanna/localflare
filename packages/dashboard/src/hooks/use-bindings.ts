@@ -9,7 +9,7 @@ export function useBindings() {
   return useQuery({
     queryKey: queryKeys.bindings.all(mode),
     queryFn: () => ds.bindings.getAll(),
-    refetchInterval: mode === 'local' ? 5000 : 30000,
+    refetchInterval: mode === 'local' ? 30000 : 60000,
     retry: 1,
   })
 }

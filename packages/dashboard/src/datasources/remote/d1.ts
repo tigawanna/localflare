@@ -70,29 +70,8 @@ export class RemoteD1DataSource implements D1DataSource {
   }
 
   async getTableInfo(binding: string, table: string): Promise<D1TableDetail> {
-    const dbId = await this.resolveDbId(binding)
-
-    const [columnsResult, indexesResult, fkResult, countResult] = await Promise.all([
-      this.executeQuery(dbId, `PRAGMA table_info("${table}")`),
-      this.executeQuery(dbId, `PRAGMA index_list("${table}")`),
-      this.executeQuery(dbId, `PRAGMA foreign_key_list("${table}")`),
-      this.executeQuery(dbId, `SELECT COUNT(*) as count FROM "${table}"`),
-    ])
-
-    const columns = (columnsResult.results ?? []) as unknown as D1ColumnInfo[]
-    const primaryKeys = columns
-      .filter((col) => col.pk > 0)
-      .sort((a, b) => a.pk - b.pk)
-      .map((col) => col.name)
-
-    return {
-      table,
-      columns,
-      primaryKeys,
-      indexes: indexesResult.results ?? [],
-      foreignKeys: fkResult.results ?? [],
-      rowCount: (countResult.results?.[0] as Record<string, unknown>)?.count as number ?? 0,
-    }
+    const results = await this.getTableInfoBatch(binding, [table])
+    return results[0]
   }
 
   async getRows(binding: string, table: string, opts: RowQueryOpts): Promise<RowsResult> {
@@ -194,6 +173,8 @@ export class RemoteD1DataSource implements D1DataSource {
     }
   }
 
+  private resolvePromise: Promise<void> | null = null
+
   private async resolveDbId(bindingOrId: string): Promise<string> {
     if (bindingOrId.includes('-') && bindingOrId.length > 30) {
       return bindingOrId
@@ -202,12 +183,69 @@ export class RemoteD1DataSource implements D1DataSource {
     const cached = this.dbIdMap.get(bindingOrId)
     if (cached) return cached
 
-    await this.listDatabases()
+    // Deduplicate concurrent listDatabases calls
+    if (!this.resolvePromise) {
+      this.resolvePromise = this.listDatabases().then(() => { this.resolvePromise = null })
+    }
+    await this.resolvePromise
+
     const resolved = this.dbIdMap.get(bindingOrId)
     if (!resolved) {
       throw new Error(`Could not resolve D1 database: "${bindingOrId}". Make sure the database exists in your Cloudflare account.`)
     }
     return resolved
+  }
+
+  /**
+   * Fetch table info for multiple tables in a single batched API call.
+   * Sends all PRAGMAs + COUNT queries in one request instead of 4×N.
+   */
+  async getTableInfoBatch(binding: string, tables: string[]): Promise<D1TableDetail[]> {
+    if (!tables.length) return []
+    const dbId = await this.resolveDbId(binding)
+
+    // Build batch: 4 queries per table (columns, indexes, fks, count)
+    const statements = tables.flatMap(table => [
+      { sql: `PRAGMA table_info("${table}")` },
+      { sql: `PRAGMA index_list("${table}")` },
+      { sql: `PRAGMA foreign_key_list("${table}")` },
+      { sql: `SELECT COUNT(*) as count FROM "${table}"` },
+    ])
+
+    const results = await this.executeBatch(dbId, statements)
+
+    return tables.map((table, i) => {
+      const base = i * 4
+      const columns = (results[base]?.results ?? []) as unknown as D1ColumnInfo[]
+      const primaryKeys = columns
+        .filter((col) => col.pk > 0)
+        .sort((a, b) => a.pk - b.pk)
+        .map((col) => col.name)
+
+      return {
+        table,
+        columns,
+        primaryKeys,
+        indexes: results[base + 1]?.results ?? [],
+        foreignKeys: results[base + 2]?.results ?? [],
+        rowCount: (results[base + 3]?.results?.[0] as Record<string, unknown>)?.count as number ?? 0,
+      }
+    })
+  }
+
+  private async executeBatch(dbId: string, statements: { sql: string; params?: unknown[] }[]): Promise<CFD1QueryResult[]> {
+    // D1 REST API only accepts single statements, so execute in parallel
+    const results = await Promise.all(
+      statements.map(async (s) => {
+        const result = await this.executeQuery(dbId, s.sql, s.params)
+        return {
+          success: result.success,
+          results: result.results ?? [],
+          meta: { changed_db: false, changes: 0, duration: 0, last_row_id: 0, rows_read: 0, rows_written: 0, size_after: 0 },
+        } as CFD1QueryResult
+      })
+    )
+    return results
   }
 
   private async executeQuery(dbId: string, sql: string, params?: unknown[]): Promise<QueryResult> {

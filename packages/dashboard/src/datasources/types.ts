@@ -249,6 +249,7 @@ export interface D1DataSource {
   listDatabases(): Promise<D1DatabaseInfo[]>
   getSchema(binding: string): Promise<D1TableInfo[]>
   getTableInfo(binding: string, table: string): Promise<D1TableDetail>
+  getTableInfoBatch?(binding: string, tables: string[]): Promise<D1TableDetail[]>
   getRows(binding: string, table: string, opts: RowQueryOpts): Promise<RowsResult>
   execute(binding: string, sql: string, params?: unknown[]): Promise<QueryResult>
   insertRow(binding: string, table: string, data: Record<string, unknown>): Promise<MutationResult>

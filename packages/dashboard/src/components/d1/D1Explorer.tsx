@@ -87,7 +87,7 @@ export function D1Explorer() {
 
   const { data: tableInfo, isLoading: loadingTableInfo } = useD1TableInfo(selectedDb, selectedTable)
 
-  const { data: tableData, isLoading: loadingTableData, refetch: refetchRows } = useQuery({
+  const { data: tableData, isLoading: loadingTableData } = useQuery({
     queryKey: d1QueryKeys.tableRows(
       mode,
       selectedDb ?? '',
@@ -131,7 +131,21 @@ export function D1Explorer() {
       addHistoryEntry({ sql: variables.sql, database: selectedDb!, success: true, duration: data.meta?.duration, rowCount: data.rowCount })
       const upperSql = variables.sql.trim().toUpperCase()
       if (!upperSql.startsWith('SELECT') && !upperSql.startsWith('PRAGMA')) {
-        queryClient.invalidateQueries({ queryKey: ['d1'] })
+        // Only invalidate the current table's rows and info, not all D1 queries
+        if (selectedDb && selectedTable) {
+          queryClient.invalidateQueries({ queryKey: d1QueryKeys.tableInfo(mode, selectedDb, selectedTable) })
+          queryClient.invalidateQueries({
+            predicate: (query) => {
+              const key = query.queryKey
+              return key[0] === 'd1' && key[1] === mode && key[2] === 'rows' && key[3] === selectedDb && key[4] === selectedTable
+            },
+          })
+        }
+        // DDL statements (CREATE, ALTER, DROP) need schema refresh
+        if (upperSql.startsWith('CREATE') || upperSql.startsWith('ALTER') || upperSql.startsWith('DROP')) {
+          queryClient.invalidateQueries({ queryKey: d1QueryKeys.schema(mode, selectedDb ?? '') })
+          queryClient.invalidateQueries({ queryKey: d1QueryKeys.databases(mode) })
+        }
         toast.success('Query executed successfully', { description: `${data.meta?.changes ?? 0} rows affected` })
       }
     },
@@ -149,7 +163,15 @@ export function D1Explorer() {
       if (!selectedDb || !selectedTable) throw new Error('No table selected')
       return ds.d1.updateCell(selectedDb, selectedTable, rowId, column, value)
     },
-    onSuccess: () => { refetchRows(); toast.success('Cell updated') },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        predicate: (query) => {
+          const key = query.queryKey
+          return key[0] === 'd1' && key[1] === mode && key[2] === 'rows' && key[3] === selectedDb && key[4] === selectedTable
+        },
+      })
+      toast.success('Cell updated')
+    },
     onError: (error) => { toast.error('Failed to update cell', { description: String(error) }) },
   })
 
@@ -161,7 +183,13 @@ export function D1Explorer() {
     onSuccess: () => {
       setShowRowEditor(false); setEditingRow(null)
       queryClient.invalidateQueries({ queryKey: d1QueryKeys.tableInfo(mode, selectedDb ?? '', selectedTable ?? '') })
-      refetchRows(); toast.success('Row inserted')
+      queryClient.invalidateQueries({
+        predicate: (query) => {
+          const key = query.queryKey
+          return key[0] === 'd1' && key[1] === mode && key[2] === 'rows' && key[3] === selectedDb && key[4] === selectedTable
+        },
+      })
+      toast.success('Row inserted')
     },
     onError: (error) => { toast.error('Failed to insert row', { description: String(error) }) },
   })
@@ -172,7 +200,14 @@ export function D1Explorer() {
       return ds.d1.updateRow(selectedDb, selectedTable, rowId, data as Record<string, unknown>)
     },
     onSuccess: () => {
-      setShowRowEditor(false); setEditingRow(null); refetchRows(); toast.success('Row updated')
+      setShowRowEditor(false); setEditingRow(null)
+      queryClient.invalidateQueries({
+        predicate: (query) => {
+          const key = query.queryKey
+          return key[0] === 'd1' && key[1] === mode && key[2] === 'rows' && key[3] === selectedDb && key[4] === selectedTable
+        },
+      })
+      toast.success('Row updated')
     },
     onError: (error) => { toast.error('Failed to update row', { description: String(error) }) },
   })
@@ -184,7 +219,13 @@ export function D1Explorer() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: d1QueryKeys.tableInfo(mode, selectedDb ?? '', selectedTable ?? '') })
-      refetchRows(); toast.success('Row deleted')
+      queryClient.invalidateQueries({
+        predicate: (query) => {
+          const key = query.queryKey
+          return key[0] === 'd1' && key[1] === mode && key[2] === 'rows' && key[3] === selectedDb && key[4] === selectedTable
+        },
+      })
+      toast.success('Row deleted')
     },
     onError: (error) => { toast.error('Failed to delete row', { description: String(error) }) },
   })
@@ -227,10 +268,15 @@ export function D1Explorer() {
   }, [selectedDb])
 
   const handleRefresh = useCallback(() => {
-    refetchRows()
     queryClient.invalidateQueries({ queryKey: d1QueryKeys.tableInfo(mode, selectedDb ?? '', selectedTable ?? '') })
+    queryClient.invalidateQueries({
+      predicate: (query) => {
+        const key = query.queryKey
+        return key[0] === 'd1' && key[1] === mode && key[2] === 'rows' && key[3] === selectedDb && key[4] === selectedTable
+      },
+    })
     toast.success('Data refreshed')
-  }, [refetchRows, queryClient, mode, selectedDb, selectedTable])
+  }, [queryClient, mode, selectedDb, selectedTable])
 
   const handleSortingChange = useCallback((sorting: SortingState) => {
     if (sorting.length > 0) setSortConfig({ column: sorting[0].id, direction: sorting[0].desc ? 'desc' : 'asc' })
@@ -262,7 +308,12 @@ export function D1Explorer() {
         setDummyDataProgress(i + 1)
       }
       queryClient.invalidateQueries({ queryKey: d1QueryKeys.tableInfo(mode, selectedDb ?? '', selectedTable ?? '') })
-      refetchRows()
+      queryClient.invalidateQueries({
+        predicate: (query) => {
+          const key = query.queryKey
+          return key[0] === 'd1' && key[1] === mode && key[2] === 'rows' && key[3] === selectedDb && key[4] === selectedTable
+        },
+      })
       toast.success(`Generated ${count} row${count !== 1 ? 's' : ''}`, { description: `Added to ${selectedTable}` })
       setShowDummyDataDialog(false)
     } catch (error) {
@@ -270,10 +321,10 @@ export function D1Explorer() {
     } finally {
       setIsGeneratingDummyData(false); setDummyDataProgress(0)
     }
-  }, [tableInfo, selectedDb, selectedTable, queryClient, refetchRows, ds, mode])
+  }, [tableInfo, selectedDb, selectedTable, queryClient, ds, mode])
 
   const tableNames = schema?.tables?.map(t => t.name)
-  const { data: allTableSchemas } = useD1AllTableSchemas(selectedDb, tableNames)
+  const { data: allTableSchemas } = useD1AllTableSchemas(selectedDb, tableNames, activeTab === 'query')
 
   // Render
   if (loadingDatabases) {

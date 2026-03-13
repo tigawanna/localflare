@@ -18,9 +18,9 @@ import { AnalyticsExplorer } from '@/components/analytics/AnalyticsExplorer'
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      refetchOnWindowFocus: true,
+      refetchOnWindowFocus: false,
       retry: 1,
-      staleTime: 5000,
+      staleTime: 30_000,
     },
   },
 })

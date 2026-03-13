@@ -38,7 +38,7 @@ export function useD1Schema(binding: string | null) {
   })
 }
 
-export function useD1AllTableSchemas(binding: string | null, tableNames: string[] | undefined) {
+export function useD1AllTableSchemas(binding: string | null, tableNames: string[] | undefined, enabled = true) {
   const ds = useDataSource()
   const { mode } = useMode()
 
@@ -47,26 +47,69 @@ export function useD1AllTableSchemas(binding: string | null, tableNames: string[
     queryFn: async (): Promise<D1TableSchema[]> => {
       if (!binding || !tableNames?.length) return []
 
-      const tableInfos = await Promise.all(
-        tableNames.map(async (tableName) => {
-          try {
-            const info = await ds.d1.getTableInfo(binding, tableName)
-            return detailToSchema(info)
-          } catch {
-            return {
+      // For autocomplete we only need column names+types per table.
+      // Fetch all columns in a single SQL query instead of N separate PRAGMAs.
+      try {
+        const result = await ds.d1.execute(
+          binding,
+          `SELECT m.name as table_name, p.name as col_name, p.type as col_type, p.pk as col_pk
+           FROM sqlite_master m
+           JOIN pragma_table_info(m.name) p
+           WHERE m.type='table' AND m.name NOT LIKE 'sqlite_%' AND m.name NOT LIKE '_cf_%'
+           ORDER BY m.name, p.cid`
+        )
+
+        const tableMap = new Map<string, D1TableSchema>()
+        for (const row of (result.results ?? []) as Record<string, unknown>[]) {
+          const tableName = row.table_name as string
+          if (!tableMap.has(tableName)) {
+            tableMap.set(tableName, {
               name: tableName,
               columns: [],
               primaryKeys: [],
               foreignKeys: [],
               indexes: [],
               rowCount: 0,
-            }
+            })
           }
-        })
-      )
-      return tableInfos
+          const schema = tableMap.get(tableName)!
+          schema.columns.push({
+            name: row.col_name as string,
+            type: (row.col_type as string) ?? '',
+            notnull: 0,
+            dflt_value: null,
+            pk: (row.col_pk as number) ?? 0,
+            cid: schema.columns.length,
+          } as D1ColumnInfo)
+          if ((row.col_pk as number) > 0) {
+            schema.primaryKeys.push(row.col_name as string)
+          }
+        }
+
+        return Array.from(tableMap.values())
+      } catch {
+        // Fallback: fetch individually if the join syntax isn't supported
+        const tableInfos = await Promise.all(
+          tableNames.map(async (tableName) => {
+            try {
+              const info = await ds.d1.getTableInfo(binding, tableName)
+              return detailToSchema(info)
+            } catch {
+              return {
+                name: tableName,
+                columns: [],
+                primaryKeys: [],
+                foreignKeys: [],
+                indexes: [],
+                rowCount: 0,
+              }
+            }
+          })
+        )
+        return tableInfos
+      }
     },
-    enabled: !!binding && !!tableNames?.length,
+    enabled: !!binding && !!tableNames?.length && enabled,
     staleTime: 5 * 60 * 1000,
   })
 }
