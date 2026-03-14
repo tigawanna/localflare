@@ -1,6 +1,6 @@
 {
   "name": "localflare",
-  "version": "0.4.2",
+  "version": "0.5.0",
   "description": "Local development dashboard for Cloudflare Workers",
   "type": "module",
   "bin": {
