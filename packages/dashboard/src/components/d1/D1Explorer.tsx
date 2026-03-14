@@ -17,7 +17,7 @@ import {
   CodeIcon,
   ClockIcon,
 } from '@phosphor-icons/react'
-import { d1Api } from '@/lib/api'
+import { useMode, useDataSource } from '@/datasources'
 import { Button, cn } from '@cloudflare/kumo'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { DataTableLoading } from '@/components/ui/data-table'
@@ -67,26 +67,29 @@ export function D1Explorer() {
   const [isGeneratingDummyData, setIsGeneratingDummyData] = useState(false)
   const [dummyDataProgress, setDummyDataProgress] = useState(0)
 
+  const { mode } = useMode()
+  const ds = useDataSource()
   const queryClient = useQueryClient()
   const { pagination, updatePagination, goToPage, setPageSize } = usePagination(50)
   const { entries: historyEntries, addEntry: addHistoryEntry, clearHistory } = useQueryHistory()
 
   // Queries
   const { data: databases, isLoading: loadingDatabases } = useQuery({
-    queryKey: d1QueryKeys.databases(),
-    queryFn: d1Api.list,
+    queryKey: d1QueryKeys.databases(mode),
+    queryFn: () => ds.d1.listDatabases().then(databases => ({ databases })),
   })
 
   const { data: schema } = useQuery({
-    queryKey: d1QueryKeys.schema(selectedDb ?? ''),
-    queryFn: () => (selectedDb ? d1Api.getSchema(selectedDb) : null),
+    queryKey: d1QueryKeys.schema(mode, selectedDb ?? ''),
+    queryFn: () => (selectedDb ? ds.d1.getSchema(selectedDb).then(tables => ({ tables })) : null),
     enabled: !!selectedDb,
   })
 
   const { data: tableInfo, isLoading: loadingTableInfo } = useD1TableInfo(selectedDb, selectedTable)
 
-  const { data: tableData, isLoading: loadingTableData, refetch: refetchRows } = useQuery({
+  const { data: tableData, isLoading: loadingTableData } = useQuery({
     queryKey: d1QueryKeys.tableRows(
+      mode,
       selectedDb ?? '',
       selectedTable ?? '',
       pagination.pageIndex,
@@ -96,13 +99,15 @@ export function D1Explorer() {
     ),
     queryFn: () =>
       selectedDb && selectedTable
-        ? d1Api.getRows(
+        ? ds.d1.getRows(
             selectedDb,
             selectedTable,
-            pagination.pageSize,
-            pagination.pageIndex * pagination.pageSize,
-            serverSideSort ? sortConfig?.column : undefined,
-            serverSideSort ? sortConfig?.direction : undefined
+            {
+              limit: pagination.pageSize,
+              offset: pagination.pageIndex * pagination.pageSize,
+              sort: serverSideSort ? sortConfig?.column : undefined,
+              direction: serverSideSort ? sortConfig?.direction : undefined,
+            }
           )
         : null,
     enabled: !!selectedDb && !!selectedTable,
@@ -117,7 +122,7 @@ export function D1Explorer() {
     mutationFn: async ({ sql }: { sql: string }) => {
       if (!selectedDb) throw new Error('No database selected')
       const startTime = Date.now()
-      const result = await d1Api.query(selectedDb, sql)
+      const result = await ds.d1.execute(selectedDb, sql)
       return { ...result, duration: Date.now() - startTime }
     },
     onSuccess: (data, variables) => {
@@ -126,7 +131,21 @@ export function D1Explorer() {
       addHistoryEntry({ sql: variables.sql, database: selectedDb!, success: true, duration: data.meta?.duration, rowCount: data.rowCount })
       const upperSql = variables.sql.trim().toUpperCase()
       if (!upperSql.startsWith('SELECT') && !upperSql.startsWith('PRAGMA')) {
-        queryClient.invalidateQueries({ queryKey: ['d1'] })
+        // Only invalidate the current table's rows and info, not all D1 queries
+        if (selectedDb && selectedTable) {
+          queryClient.invalidateQueries({ queryKey: d1QueryKeys.tableInfo(mode, selectedDb, selectedTable) })
+          queryClient.invalidateQueries({
+            predicate: (query) => {
+              const key = query.queryKey
+              return key[0] === 'd1' && key[1] === mode && key[2] === 'rows' && key[3] === selectedDb && key[4] === selectedTable
+            },
+          })
+        }
+        // DDL statements (CREATE, ALTER, DROP) need schema refresh
+        if (upperSql.startsWith('CREATE') || upperSql.startsWith('ALTER') || upperSql.startsWith('DROP')) {
+          queryClient.invalidateQueries({ queryKey: d1QueryKeys.schema(mode, selectedDb ?? '') })
+          queryClient.invalidateQueries({ queryKey: d1QueryKeys.databases(mode) })
+        }
         toast.success('Query executed successfully', { description: `${data.meta?.changes ?? 0} rows affected` })
       }
     },
@@ -142,21 +161,35 @@ export function D1Explorer() {
   const updateCellMutation = useMutation({
     mutationFn: async ({ rowId, column, value }: { rowId: string; column: string; value: D1CellValue }) => {
       if (!selectedDb || !selectedTable) throw new Error('No table selected')
-      return d1Api.updateCell(selectedDb, selectedTable, rowId, column, value)
+      return ds.d1.updateCell(selectedDb, selectedTable, rowId, column, value)
     },
-    onSuccess: () => { refetchRows(); toast.success('Cell updated') },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        predicate: (query) => {
+          const key = query.queryKey
+          return key[0] === 'd1' && key[1] === mode && key[2] === 'rows' && key[3] === selectedDb && key[4] === selectedTable
+        },
+      })
+      toast.success('Cell updated')
+    },
     onError: (error) => { toast.error('Failed to update cell', { description: String(error) }) },
   })
 
   const insertRowMutation = useMutation({
     mutationFn: async (data: Record<string, D1CellValue>) => {
       if (!selectedDb || !selectedTable) throw new Error('No table selected')
-      return d1Api.insertRow(selectedDb, selectedTable, data as Record<string, unknown>)
+      return ds.d1.insertRow(selectedDb, selectedTable, data as Record<string, unknown>)
     },
     onSuccess: () => {
       setShowRowEditor(false); setEditingRow(null)
-      queryClient.invalidateQueries({ queryKey: d1QueryKeys.tableInfo(selectedDb ?? '', selectedTable ?? '') })
-      refetchRows(); toast.success('Row inserted')
+      queryClient.invalidateQueries({ queryKey: d1QueryKeys.tableInfo(mode, selectedDb ?? '', selectedTable ?? '') })
+      queryClient.invalidateQueries({
+        predicate: (query) => {
+          const key = query.queryKey
+          return key[0] === 'd1' && key[1] === mode && key[2] === 'rows' && key[3] === selectedDb && key[4] === selectedTable
+        },
+      })
+      toast.success('Row inserted')
     },
     onError: (error) => { toast.error('Failed to insert row', { description: String(error) }) },
   })
@@ -164,10 +197,17 @@ export function D1Explorer() {
   const updateRowMutation = useMutation({
     mutationFn: async ({ rowId, data }: { rowId: string; data: Record<string, D1CellValue> }) => {
       if (!selectedDb || !selectedTable) throw new Error('No table selected')
-      return d1Api.updateRow(selectedDb, selectedTable, rowId, data as Record<string, unknown>)
+      return ds.d1.updateRow(selectedDb, selectedTable, rowId, data as Record<string, unknown>)
     },
     onSuccess: () => {
-      setShowRowEditor(false); setEditingRow(null); refetchRows(); toast.success('Row updated')
+      setShowRowEditor(false); setEditingRow(null)
+      queryClient.invalidateQueries({
+        predicate: (query) => {
+          const key = query.queryKey
+          return key[0] === 'd1' && key[1] === mode && key[2] === 'rows' && key[3] === selectedDb && key[4] === selectedTable
+        },
+      })
+      toast.success('Row updated')
     },
     onError: (error) => { toast.error('Failed to update row', { description: String(error) }) },
   })
@@ -175,11 +215,17 @@ export function D1Explorer() {
   const deleteRowMutation = useMutation({
     mutationFn: async (rowId: string) => {
       if (!selectedDb || !selectedTable) throw new Error('No table selected')
-      return d1Api.deleteRow(selectedDb, selectedTable, rowId)
+      return ds.d1.deleteRow(selectedDb, selectedTable, rowId)
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: d1QueryKeys.tableInfo(selectedDb ?? '', selectedTable ?? '') })
-      refetchRows(); toast.success('Row deleted')
+      queryClient.invalidateQueries({ queryKey: d1QueryKeys.tableInfo(mode, selectedDb ?? '', selectedTable ?? '') })
+      queryClient.invalidateQueries({
+        predicate: (query) => {
+          const key = query.queryKey
+          return key[0] === 'd1' && key[1] === mode && key[2] === 'rows' && key[3] === selectedDb && key[4] === selectedTable
+        },
+      })
+      toast.success('Row deleted')
     },
     onError: (error) => { toast.error('Failed to delete row', { description: String(error) }) },
   })
@@ -222,10 +268,15 @@ export function D1Explorer() {
   }, [selectedDb])
 
   const handleRefresh = useCallback(() => {
-    refetchRows()
-    queryClient.invalidateQueries({ queryKey: d1QueryKeys.tableInfo(selectedDb ?? '', selectedTable ?? '') })
+    queryClient.invalidateQueries({ queryKey: d1QueryKeys.tableInfo(mode, selectedDb ?? '', selectedTable ?? '') })
+    queryClient.invalidateQueries({
+      predicate: (query) => {
+        const key = query.queryKey
+        return key[0] === 'd1' && key[1] === mode && key[2] === 'rows' && key[3] === selectedDb && key[4] === selectedTable
+      },
+    })
     toast.success('Data refreshed')
-  }, [refetchRows, queryClient, selectedDb, selectedTable])
+  }, [queryClient, mode, selectedDb, selectedTable])
 
   const handleSortingChange = useCallback((sorting: SortingState) => {
     if (sorting.length > 0) setSortConfig({ column: sorting[0].id, direction: sorting[0].desc ? 'desc' : 'asc' })
@@ -244,7 +295,7 @@ export function D1Explorer() {
       if (tableInfo.foreignKeys?.length > 0) {
         for (const fk of tableInfo.foreignKeys) {
           try {
-            const result = await d1Api.query(selectedDb, `SELECT DISTINCT "${fk.to}" FROM "${fk.table}" LIMIT 100`)
+            const result = await ds.d1.execute(selectedDb, `SELECT DISTINCT "${fk.to}" FROM "${fk.table}" LIMIT 100`)
             if (result.results && result.results.length > 0) {
               foreignKeyValues[fk.from] = (result.results as Record<string, D1CellValue>[]).map(row => row[fk.to]).filter(v => v != null)
             }
@@ -253,11 +304,16 @@ export function D1Explorer() {
       }
       for (let i = 0; i < count; i++) {
         const row = generateDummyRow(tableInfo, foreignKeyValues)
-        await d1Api.insertRow(selectedDb, selectedTable!, row as Record<string, unknown>)
+        await ds.d1.insertRow(selectedDb, selectedTable!, row as Record<string, unknown>)
         setDummyDataProgress(i + 1)
       }
-      queryClient.invalidateQueries({ queryKey: d1QueryKeys.tableInfo(selectedDb ?? '', selectedTable ?? '') })
-      refetchRows()
+      queryClient.invalidateQueries({ queryKey: d1QueryKeys.tableInfo(mode, selectedDb ?? '', selectedTable ?? '') })
+      queryClient.invalidateQueries({
+        predicate: (query) => {
+          const key = query.queryKey
+          return key[0] === 'd1' && key[1] === mode && key[2] === 'rows' && key[3] === selectedDb && key[4] === selectedTable
+        },
+      })
       toast.success(`Generated ${count} row${count !== 1 ? 's' : ''}`, { description: `Added to ${selectedTable}` })
       setShowDummyDataDialog(false)
     } catch (error) {
@@ -265,10 +321,10 @@ export function D1Explorer() {
     } finally {
       setIsGeneratingDummyData(false); setDummyDataProgress(0)
     }
-  }, [tableInfo, selectedDb, selectedTable, queryClient, refetchRows])
+  }, [tableInfo, selectedDb, selectedTable, queryClient, ds, mode])
 
   const tableNames = schema?.tables?.map(t => t.name)
-  const { data: allTableSchemas } = useD1AllTableSchemas(selectedDb, tableNames)
+  const { data: allTableSchemas } = useD1AllTableSchemas(selectedDb, tableNames, activeTab === 'query')
 
   // Render
   if (loadingDatabases) {
